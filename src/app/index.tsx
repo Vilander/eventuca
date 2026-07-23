@@ -1,11 +1,12 @@
 import Header from '@/components/Header';
 import { colors } from '@/styles/colors';
 import { globalStyles } from '@/styles/globalStyles';
+import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { styles } from './styles'; // <-- Importação com chaves
+import { styles } from './styles';
 
-export default function TelaInicio({ navigation }: any) {
+export default function TelaInicio() {
   return (
     <View style={globalStyles.container}>
       <Header />
@@ -19,7 +20,7 @@ export default function TelaInicio({ navigation }: any) {
         <TouchableOpacity
           style={styles.cartaoEvento}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('DetalhesEvento')}
+          onPress={() => router.navigate('/evento/1')}
         >
           <View style={styles.etiquetaCartao}>
             <Text style={styles.textoEtiqueta}>EVENTO</Text>
