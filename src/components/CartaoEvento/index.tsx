@@ -1,5 +1,5 @@
 import { Pressable, Text } from 'react-native';
-import type { Evento } from '../../mock/dadosEventos';
+import type { Evento } from '../../database/dadosEventos';
 import EtiquetaCategoria from '../EtiquetaCategoria';
 import styles from './styles';
 

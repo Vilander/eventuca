@@ -1,14 +1,14 @@
+import React from 'react';
 import { Text, View } from 'react-native';
-import styles from './styles';
+import { styles } from './styles';
 
-type HeaderProps = {
-  titulo?: string;
-};
-
-export default function Header({ titulo = 'eventuca' }: HeaderProps) {
+export default function Header() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.titulo}>{titulo}</Text>
+    <View style={styles.containerHeader}>
+      <Text style={styles.tituloMarca}>EVENtuca</Text>
+      <Text style={styles.subtituloMarca}>
+        Tecnologia Unindo Comunidades e Admiradores
+      </Text>
     </View>
   );
 }

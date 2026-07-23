@@ -1,17 +1,18 @@
+import { colors } from '@/styles/colors';
 import { StyleSheet } from 'react-native';
-import { colors } from '../../styles/colors';
 
-export default StyleSheet.create({
-  botao: {
-    backgroundColor: colors.blue[500],
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+export const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.orange[500],
+    padding: 14,
+    borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 8,
   },
-  texto: {
+  titulo: {
     color: colors.white,
+    fontWeight: 'bold',
     fontSize: 16,
-    fontWeight: '700',
   },
 });
