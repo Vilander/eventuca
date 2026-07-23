@@ -1,22 +1,26 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function CategoryBadge({ label }) {
+type PropsEtiquetaCategoria = {
+  nome: string;
+};
+
+export function EtiquetaCategoria({ nome }: PropsEtiquetaCategoria) {
   return (
-    <View style={styles.badge}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={styles.etiqueta}>
+      <Text style={styles.texto}>{nome}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  badge: {
+  etiqueta: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 999,
     backgroundColor: '#e8f1ff',
   },
-  label: {
+  texto: {
     color: '#155eef',
     fontSize: 12,
     fontWeight: '600',
