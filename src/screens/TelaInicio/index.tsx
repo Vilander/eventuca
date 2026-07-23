@@ -1,8 +1,8 @@
 import { ScrollView, Text } from 'react-native';
-import CartaoEvento from '../components/CartaoEvento';
-import Header from '../components/Header';
-import dadosEventos from '../mock/dadosEventos';
-import globalStyles from '../styles/globalStyles';
+import CartaoEvento from '../../components/CartaoEvento';
+import Header from '../../components/Header';
+import dadosEventos from '../../mock/dadosEventos';
+import globalStyles from '../../styles/globalStyles';
 
 export default function TelaInicio() {
   return (
