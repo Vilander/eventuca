@@ -1,7 +1,7 @@
 import { colors } from '@/styles/colors';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './styles';
 
 type Props = {
@@ -9,22 +9,35 @@ type Props = {
   data: string;
   preco: string;
   gratuito?: boolean;
+  imagem?: any;
 };
 
-export function CartaoRecomendado({ titulo, data, preco, gratuito = false }: Props) {
+export function CartaoRecomendado({ titulo, data, preco, gratuito = false, imagem }: Props) {
   return (
     <TouchableOpacity style={styles.card} activeOpacity={0.8}>
-      <Text style={styles.titulo} numberOfLines={1}>{titulo}</Text>
-      
-      <View style={styles.linhaData}>
-        <Ionicons name="calendar-outline" size={12} color={colors.gray[400]} />
-        <Text style={styles.textoData}>{data}</Text>
-      </View>
+      {imagem && <Image source={imagem} style={styles.imagemCard} resizeMode="cover" />}
 
-      <View style={gratuito ? styles.badgeGratuito : styles.badgePago}>
-        <Text style={gratuito ? styles.textoGratuito : styles.textoPago}>
-          {gratuito ? 'GRATUITO' : preco}
-        </Text>
+      <View style={styles.conteudoCard}>
+        <Text style={styles.titulo} numberOfLines={1}>{titulo}</Text>
+        
+        <View style={styles.linhaData}>
+          <Ionicons name="calendar-outline" size={12} color={colors.gray[400]} />
+          <Text style={styles.textoData}>{data}</Text>
+        </View>
+
+        <View style={gratuito ? styles.badgeGratuito : styles.badgePago}>
+          {gratuito && (
+            <Ionicons 
+              name="flame-outline" 
+              size={10} 
+              color={colors.pink[400]} 
+              style={{ marginRight: 4 }} 
+            />
+          )}
+          <Text style={gratuito ? styles.textoGratuito : styles.textoPago}>
+            {gratuito ? 'GRATUITO' : preco}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   );

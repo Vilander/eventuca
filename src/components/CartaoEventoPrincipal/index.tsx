@@ -8,10 +8,19 @@ type Props = {
   titulo: string;
   descricao: string;
   data: string;
+  presencial?: boolean; 
+  online?: boolean; 
   onPress: () => void;
 };
 
-export function CartaoEventoPrincipal({ titulo, descricao, data, onPress }: Props) {
+export function CartaoEventoPrincipal({ 
+  titulo, 
+  descricao, 
+  data, 
+  presencial = false, 
+  online = false, 
+  onPress 
+}: Props) {
   const [favorito, setFavorito] = useState(false);
 
   return (
@@ -31,11 +40,18 @@ export function CartaoEventoPrincipal({ titulo, descricao, data, onPress }: Prop
         </View>
 
         <View style={styles.linhaTags}>
-          <View style={styles.tagModalidade}>
-            <Text style={styles.textoTag}>PRESENCIAL</Text>
+          {/* Tag Presencial */}
+          <View style={[styles.tagModalidade, presencial && styles.tagModalidadeAtiva]}>
+            <Text style={[styles.textoTag, presencial && styles.textoTagAtiva]}>
+              PRESENCIAL
+            </Text>
           </View>
-          <View style={styles.tagModalidade}>
-            <Text style={styles.textoTag}>ON-LINE</Text>
+
+          {/* Tag On-line */}
+          <View style={[styles.tagModalidade, online && styles.tagModalidadeAtiva]}>
+            <Text style={[styles.textoTag, online && styles.textoTagAtiva]}>
+              ON-LINE
+            </Text>
           </View>
         </View>
 

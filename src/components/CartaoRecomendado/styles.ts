@@ -5,13 +5,26 @@ const { width } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   card: {
-    width: width * 0.42,
+    width: width * 0.44,
     backgroundColor: colors.gray[900],
     borderRadius: 8,
     padding: 8,
     marginRight: 10,
     borderWidth: 1,
     borderColor: colors.gray[800],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  imagemCard: {
+    width: 50,
+    height: 50,
+    borderRadius: 6,
+    backgroundColor: colors.gray[800],
+  },
+  conteudoCard: {
+    flex: 1,
+    justifyContent: 'center',
   },
   titulo: {
     color: colors.white,
@@ -23,23 +36,26 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   textoData: {
     color: colors.gray[400],
     fontSize: 10,
   },
   badgeGratuito: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.pink[500],
     borderRadius: 12,
     paddingVertical: 2,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     alignSelf: 'flex-start',
+    backgroundColor: colors.gray[900],
   },
   textoGratuito: {
     color: colors.pink[400],
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
   },
   badgePago: {
@@ -47,12 +63,13 @@ export const styles = StyleSheet.create({
     borderColor: colors.green[500],
     borderRadius: 12,
     paddingVertical: 2,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     alignSelf: 'flex-start',
+    backgroundColor: colors.gray[900],
   },
   textoPago: {
     color: colors.green[500],
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
   },
 });

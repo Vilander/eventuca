@@ -5,7 +5,8 @@ const { width } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   card: {
-    width: width * 0.44,
+    width: width * 0.51,
+    height: 280,
     backgroundColor: colors.gray[900],
     borderRadius: 12,
     padding: 12,
@@ -64,6 +65,18 @@ export const styles = StyleSheet.create({
   },
   textoTag: {
     color: colors.orange[400],
+    fontSize: 8,
+    fontWeight: 'bold',
+  },
+  tagModalidadeAtiva: {
+    backgroundColor: colors.orange[500],
+    borderColor: colors.orange[500],
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  textoTagAtiva: {
+    color: colors.gray[900], // Texto escuro para contraste no fundo laranja
     fontSize: 8,
     fontWeight: 'bold',
   },

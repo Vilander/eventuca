@@ -10,6 +10,30 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.gray[700],
   },
+  paginationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.gray[600],
+  },
+  dotAtivo: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.white,
+  },
   etiquetaCartao: {
     alignSelf: 'flex-start',
     backgroundColor: colors.orange[500],
@@ -45,5 +69,43 @@ export const styles = StyleSheet.create({
   etiquetaPreco: { 
     color: colors.green[500], 
     fontWeight: 'bold' 
+  },
+  containerBusca: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  inputBusca: {
+    backgroundColor: colors.gray[800],
+    color: colors.white,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingLeft: 16,
+    paddingRight: 40,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: colors.gray[700],
+  },
+  iconeBusca: {
+    position: 'absolute',
+    right: 14,
+  },
+  tituloSecao: {
+    color: colors.white,
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  chipCategoria: {
+    borderWidth: 1,
+    borderColor: colors.orange[500],
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 6,
+  },
+  textoChip: {
+    color: colors.orange[400],
+    fontSize: 11,
   },
 });
