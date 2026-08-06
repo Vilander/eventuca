@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 12,
+    marginTop: 16,
     gap: 8,
   },
   dotsContainer: {
@@ -93,19 +93,36 @@ export const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: 'bold',
     fontSize: 14,
-    marginTop: 16,
+    marginTop: 12,
     marginBottom: 8,
+  },
+  linhaDivisoria: {
+    height: 1,
+    backgroundColor: colors.gray[800], 
+    marginVertical: 16,   
+    marginTop: 24,        
+    width: '100%',
   },
   chipCategoria: {
     borderWidth: 1,
     borderColor: colors.orange[500],
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 4,
     marginRight: 6,
+    marginTop: 10,
+    marginBottom: 14,
+    backgroundColor: 'transparent',
+  },
+  chipCategoriaAtivo: {
+    backgroundColor: colors.orange[500],
   },
   textoChip: {
     color: colors.orange[400],
     fontSize: 11,
+  },
+  textoChipAtivo: {
+    color: colors.gray[900], 
+    fontWeight: 'bold',
   },
 });

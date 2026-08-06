@@ -1,8 +1,10 @@
 import { colors } from '@/styles/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './styles';
+
+
 
 type Props = {
   titulo: string;
@@ -27,8 +29,8 @@ export function CartaoRecomendado({ titulo, data, preco, gratuito = false, image
 
         <View style={gratuito ? styles.badgeGratuito : styles.badgePago}>
           {gratuito && (
-            <Ionicons 
-              name="flame-outline" 
+            <MaterialIcons 
+              name="money-off" 
               size={10} 
               color={colors.pink[400]} 
               style={{ marginRight: 4 }} 

@@ -12,12 +12,18 @@ import { globalStyles } from '@/styles/globalStyles';
 
 import { styles } from './styles';
 
+import ImgTeste from '../../assets/gallery/teste.jpg';
+
 const { width } = Dimensions.get('window');
 
 // Largura aproximada do card (ex: 44% da tela) + o gap de 12
 const CARD_WIDTH = (width * 0.44) + 12; 
 
+const CATEGORIAS = ['Todos', 'Meetup', 'Conferência', 'Hackathon', 'Bootcamp', 'Webinar', 'Fórum'];
+
 export default function TelaInicio() {
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState('Todos');
+
   const [paginaAtiva, setPaginaAtiva] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -59,6 +65,21 @@ export default function TelaInicio() {
       rota: '/evento/4'
     }
   ];
+
+  const todosEventos = [
+    { id: '1', titulo: 'ERP Summit', data: '14 jul 2026', preco: 'GRATUITO', gratuito: true, categoria: 'Conferência', imagem: ImgTeste },
+    { id: '2', titulo: 'DebConf', data: '11 out 2026', preco: '$ 250,00', gratuito: false, categoria: 'Hackathon', imagem: ImgTeste },
+    { id: '3', titulo: 'Meetup Devs', data: '20 ago 2026', preco: 'GRATUITO', gratuito: true, categoria: 'Meetup', imagem: ImgTeste },
+  ];
+
+  const handleSelecionarCategoria = (cat: string) => {
+    setCategoriaSelecionada(cat === categoriaSelecionada ? 'Todos' : cat);
+  };
+
+  const eventosFiltrados = categoriaSelecionada === 'Todos'
+    ? todosEventos
+    : todosEventos.filter((e) => e.categoria === categoriaSelecionada);
+  
   const isAutoScrolling = useRef(false);
   const handleScroll = (event: any) => {
     if (isAutoScrolling.current) return;
@@ -149,31 +170,42 @@ export default function TelaInicio() {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.linhaDivisoria} />
+
         {/* Seção Recomendados */}
         <Text style={styles.tituloSecao}>Recomendados para você:</Text>
 
-        {/* Chips de Categoria */}
+        {/* Chips de Categoria Clicáveis */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-          {['Meetup', 'Conferência', 'Hackathon', 'Bootcamp', 'Webinar', 'Fórum'].map((cat, index) => (
-            <View key={index} style={styles.chipCategoria}>
-              <Text style={styles.textoChip}>{cat}</Text>
-            </View>
-          ))}
+          {CATEGORIAS.map((cat) => {
+            const isAtivo = categoriaSelecionada === cat;
+            return (
+              <TouchableOpacity
+                key={cat}
+                activeOpacity={0.7}
+                onPress={() => handleSelecionarCategoria(cat)}
+                style={[styles.chipCategoria, isAtivo && styles.chipCategoriaAtivo]}
+              >
+                <Text style={[styles.textoChip, isAtivo && styles.textoChipAtivo]}>
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
-        {/* Lista Horizontal de Recomendados */}
+        {/* Lista Horizontal de Recomendados Filtrados */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <CartaoRecomendado
-            titulo="ERP Summit"
-            data="14 jul 2026"
-            preco="GRATUITO"
-            gratuito
-          />
-          <CartaoRecomendado
-            titulo="AI Conference"
-            data="14 jul 2026"
-            preco="$ 250,00"
-          />
+          {eventosFiltrados.map((item) => (
+            <CartaoRecomendado
+              key={item.id}
+              titulo={item.titulo}
+              data={item.data}
+              preco={item.preco}
+              gratuito={item.gratuito}
+              imagem={item.imagem}
+            />
+          ))}
         </ScrollView>
       </ScrollView>
     </View>

@@ -5,7 +5,8 @@ const { width } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   card: {
-    width: width * 0.44,
+    width: width * 0.48,
+    height: 90,
     backgroundColor: colors.gray[900],
     borderRadius: 8,
     padding: 8,
@@ -28,7 +29,7 @@ export const styles = StyleSheet.create({
   },
   titulo: {
     color: colors.white,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 4,
   },
@@ -40,7 +41,7 @@ export const styles = StyleSheet.create({
   },
   textoData: {
     color: colors.gray[400],
-    fontSize: 10,
+    fontSize: 12,
   },
   badgeGratuito: {
     flexDirection: 'row',
@@ -55,7 +56,7 @@ export const styles = StyleSheet.create({
   },
   textoGratuito: {
     color: colors.pink[400],
-    fontSize: 9,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   badgePago: {
@@ -63,13 +64,13 @@ export const styles = StyleSheet.create({
     borderColor: colors.green[500],
     borderRadius: 12,
     paddingVertical: 2,
-    paddingHorizontal: 6,
+    paddingHorizontal:10,
     alignSelf: 'flex-start',
     backgroundColor: colors.gray[900],
   },
   textoPago: {
     color: colors.green[500],
-    fontSize: 9,
+    fontSize: 12,
     fontWeight: 'bold',
   },
 });
