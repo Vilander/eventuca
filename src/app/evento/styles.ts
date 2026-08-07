@@ -1,0 +1,167 @@
+import { colors } from '@/styles/colors';
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  botaoVoltar: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  cardDetalhes: {
+    backgroundColor: colors.gray[900],
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.orange[500],
+    padding: 16,
+  },
+  headerCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  badgeEvento: {
+    backgroundColor: colors.orange[500],
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  textoBadgeEvento: {
+    color: colors.white,
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  tituloEvento: {
+    color: colors.white,
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  linhaData: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  textoData: {
+    color: colors.gray[200],
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  linhaCategorias: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
+  chipCategoria: {
+    borderWidth: 1,
+    borderColor: colors.orange[500],
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  textoChipCategoria: {
+    color: colors.orange[400],
+    fontSize: 10,
+  },
+  linhaBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  badgePresencial: {
+    backgroundColor: colors.orange[500],
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  textoBadgePresencial: {
+    color: colors.gray[900],
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  badgeGratuito: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors.pink[500],
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  textoBadgeGratuito: {
+    color: colors.pink[400],
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  badgeCertificado: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors.gray[600],
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  textoBadgeCertificado: {
+    color: colors.gray[300],
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  containerImagem: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 12,
+  },
+  imagemBanner: {
+    width: '100%',
+    height: 180,
+  },
+  textoDescricao: {
+    color: colors.gray[300],
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  textoNegrito: {
+    fontWeight: 'bold',
+    color: colors.white,
+  },
+  rodapeAcoes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  botaoAcessar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.orange[500],
+    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  textoBotaoAcessar: {
+    color: colors.gray[900],
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  containerRedes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+});

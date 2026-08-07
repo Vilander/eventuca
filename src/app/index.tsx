@@ -7,79 +7,40 @@ import { CartaoEventoPrincipal } from '@/components/CartaoEventoPrincipal';
 import { CartaoRecomendado } from '@/components/CartaoRecomendado';
 import { FiltroMeses } from '@/components/FiltroMeses';
 import Header from '@/components/Header';
+import dadosEventos from '@/database/dadosEventos';
 import { colors } from '@/styles/colors';
 import { globalStyles } from '@/styles/globalStyles';
 
 import { styles } from './styles';
 
-import ImgTeste from '../../assets/gallery/teste.jpg';
-
 const { width } = Dimensions.get('window');
 
-// Largura aproximada do card (ex: 44% da tela) + o gap de 12
-const CARD_WIDTH = (width * 0.44) + 12; 
+const CARD_WIDTH = (width * 0.44) + 12;
 
 const CATEGORIAS = ['Todos', 'Meetup', 'Conferência', 'Hackathon', 'Bootcamp', 'Webinar', 'Fórum'];
 
 export default function TelaInicio() {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('Todos');
-
   const [paginaAtiva, setPaginaAtiva] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
-  const eventosDestaque = [
-    {
-      id: '1',
-      titulo: "Devops Days São Paulo",
-      descricao: "DevOpsDays é um evento comunitário de tecnologia focado em DevOps, cloud, automação...",
-      data: "13 jun 2026",
-      presencial: true,
-      online: false,
-      rota: '/evento/1'
-    },
-    {
-      id: '2',
-      titulo: "Meetup HackerX",
-      descricao: "Ingresso para empregadores no HackerX São Paulo: evento exclusivo de recrutamento...",
-      data: "27 jun 2026",
-      presencial: false,
-      online: true,
-      rota: '/evento/2'
-    },
-    {
-      id: '3',
-      titulo: "AWS Summit",
-      descricao: "O maior evento AWS da América Latina...",
-      data: "07 set 2026",
-      presencial: true,
-      online: false,
-      rota: '/evento/3'
-    },
-    {
-      id: '4',
-      titulo: "GDG Americana",
-      descricao: "Evento Google plataform no interior de São Paulo...",
-      data: "19 out 2026",
-      presencial: true,
-      online: false,
-      rota: '/evento/4'
-    }
-  ];
+  // 1. Cards Principais (Puxam de dadosEventos)
+  const eventosDestaque = dadosEventos;
 
-  const todosEventos = [
-    { id: '1', titulo: 'ERP Summit', data: '14 jul 2026', preco: 'GRATUITO', gratuito: true, categoria: 'Conferência', imagem: ImgTeste },
-    { id: '2', titulo: 'DebConf', data: '11 out 2026', preco: '$ 250,00', gratuito: false, categoria: 'Hackathon', imagem: ImgTeste },
-    { id: '3', titulo: 'Meetup Devs', data: '20 ago 2026', preco: 'GRATUITO', gratuito: true, categoria: 'Meetup', imagem: ImgTeste },
-  ];
+  // 2. Cards de Recomendação (Filtrados por categoria a partir do mesmo dadosEventos)
+  const eventosRecomendadosFiltrados = categoriaSelecionada === 'Todos'
+    ? dadosEventos
+    : dadosEventos.filter((e) => {
+        if (e.categorias) {
+          return e.categorias.includes(categoriaSelecionada);
+        }
+        return e.categoria === categoriaSelecionada;
+      });
 
   const handleSelecionarCategoria = (cat: string) => {
     setCategoriaSelecionada(cat === categoriaSelecionada ? 'Todos' : cat);
   };
 
-  const eventosFiltrados = categoriaSelecionada === 'Todos'
-    ? todosEventos
-    : todosEventos.filter((e) => e.categoria === categoriaSelecionada);
-  
   const isAutoScrolling = useRef(false);
   const handleScroll = (event: any) => {
     if (isAutoScrolling.current) return;
@@ -89,8 +50,8 @@ export default function TelaInicio() {
   };
 
   const rolarPara = (direcao: 'esquerda' | 'direita') => {
-    const novaPagina = direcao === 'esquerda' 
-      ? Math.max(paginaAtiva - 1, 0) 
+    const novaPagina = direcao === 'esquerda'
+      ? Math.max(paginaAtiva - 1, 0)
       : Math.min(paginaAtiva + 1, eventosDestaque.length - 1);
 
     isAutoScrolling.current = true;
@@ -125,10 +86,10 @@ export default function TelaInicio() {
         <FiltroMeses />
 
         {/* Listagem de Eventos Destaque (Carrossel Horizontal) */}
-        <ScrollView 
+        <ScrollView
           ref={scrollRef}
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
+          horizontal
+          showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, gap: 4 }}
           style={{ marginVertical: 8 }}
           onScroll={handleScroll}
@@ -138,11 +99,11 @@ export default function TelaInicio() {
             <CartaoEventoPrincipal
               key={item.id}
               titulo={item.titulo}
-              descricao={item.descricao}
+              descricao={item.descricao || ''}
               data={item.data}
-              presencial={item.presencial}
-              online={item.online}
-              onPress={() => router.navigate(item.rota as any)}
+              presencial={!!item.presencial}
+              online={!!item.online}
+              onPress={() => router.navigate(`/evento/${item.id}` as any)}
             />
           ))}
         </ScrollView>
@@ -196,13 +157,13 @@ export default function TelaInicio() {
 
         {/* Lista Horizontal de Recomendados Filtrados */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {eventosFiltrados.map((item) => (
+          {eventosRecomendadosFiltrados.map((item) => (
             <CartaoRecomendado
               key={item.id}
               titulo={item.titulo}
               data={item.data}
-              preco={item.preco}
-              gratuito={item.gratuito}
+              preco={item.gratuito ? 'GRATUITO' : (item.preco || 'Sob consulta')}
+              gratuito={!!item.gratuito}
               imagem={item.imagem}
             />
           ))}
