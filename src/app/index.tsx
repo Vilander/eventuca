@@ -165,6 +165,7 @@ export default function TelaInicio() {
               preco={item.gratuito ? 'GRATUITO' : (item.preco || 'Sob consulta')}
               gratuito={!!item.gratuito}
               imagem={item.imagem}
+              onPress={() => router.navigate(`/evento/${item.id}` as any)}
             />
           ))}
         </ScrollView>
