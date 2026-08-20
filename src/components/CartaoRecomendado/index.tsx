@@ -4,19 +4,18 @@ import React from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './styles';
 
-
-
 type Props = {
   titulo: string;
   data: string;
   preco: string;
   gratuito?: boolean;
   imagem?: any;
+  onPress?: () => void; // 1. Adicionado nas propriedades
 };
 
-export function CartaoRecomendado({ titulo, data, preco, gratuito = false, imagem }: Props) {
+export function CartaoRecomendado({ titulo, data, preco, gratuito = false, imagem, onPress }: Props) {
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={onPress}>
       {imagem && <Image source={imagem} style={styles.imagemCard} resizeMode="cover" />}
 
       <View style={styles.conteudoCard}>
