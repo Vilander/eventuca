@@ -150,7 +150,7 @@ export default function TelaPerfil() {
         {/* Card Seus Dados */}
         <View style={localStyles.cardPerfil}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <Ionicons name="book-outline" size={16} color={colors.white} />
+            <Ionicons name="clipboard-outline" size={16} color={colors.white} />
             <Text style={{ color: colors.white, fontWeight: 'bold', fontSize: 14 }}>Seus dados</Text>
           </View>
 
@@ -169,7 +169,7 @@ export default function TelaPerfil() {
         {/* Linha Eventos Criados */}
         <TouchableOpacity style={localStyles.linhaOpcaoPerfil} activeOpacity={0.7}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Ionicons name="book-outline" size={16} color={colors.white} />
+            <Ionicons name="clipboard-outline" size={16} color={colors.white} />
             <Text style={localStyles.textoOpcaoPerfil}>Eventos criados</Text>
           </View>
           <View style={localStyles.badgeContador}>
@@ -180,7 +180,7 @@ export default function TelaPerfil() {
         {/* Linha Meus Eventos Salvos */}
         <TouchableOpacity style={localStyles.linhaOpcaoPerfil} activeOpacity={0.7}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Ionicons name="book-outline" size={16} color={colors.white} />
+            <Ionicons name="clipboard-outline" size={16} color={colors.white} />
             <Text style={localStyles.textoOpcaoPerfil}>Meus eventos salvos</Text>
           </View>
           <View style={localStyles.badgeContador}>
@@ -267,7 +267,7 @@ const localStyles = StyleSheet.create({
   cardPerfil: {
     backgroundColor: colors.gray[900],
     borderWidth: 1,
-    borderColor: colors.orange[500],
+    borderColor: colors.gray[800],
     borderRadius: 10,
     padding: 16,
     marginBottom: 12,
