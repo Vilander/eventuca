@@ -130,7 +130,7 @@ export default function TelaDetalhesEvento() {
               onPress={() => abrirLink(evento.linkOficial)}
             >
               <Text style={styles.textoBotaoAcessar}>Acessar página do evento</Text>
-              <Ionicons name="open-outline" size={16} color={colors.white} />
+              <Ionicons name="open-outline" size={20} color={colors.black} />
             </TouchableOpacity>
 
             <View style={styles.containerRedes}>

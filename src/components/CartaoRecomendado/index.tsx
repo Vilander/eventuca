@@ -10,7 +10,7 @@ type Props = {
   preco: string;
   gratuito?: boolean;
   imagem?: any;
-  onPress?: () => void; // 1. Adicionado nas propriedades
+  onPress?: () => void; 
 };
 
 export function CartaoRecomendado({ titulo, data, preco, gratuito = false, imagem, onPress }: Props) {
