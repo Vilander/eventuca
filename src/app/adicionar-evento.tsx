@@ -1,20 +1,25 @@
-import { styles } from '@/app/styles';
 import { Botao } from '@/components/Botao';
 import Header from '@/components/Header';
 import { useEventoDatabase } from '@/database/useEventoDatabase';
 import { colors } from '@/styles/colors';
 import { globalStyles } from '@/styles/globalStyles';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import DateTimePicker, {
+  DateTimePickerAndroid,
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
+  Platform,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { styles } from './styles';
 
 const OPCOES_CATEGORIAS = [
   'Hackathon', 'Workshop', 'Bootcamp', 'Game Jam',
@@ -22,12 +27,17 @@ const OPCOES_CATEGORIAS = [
   'Summit', 'Feira Tech', 'Webinar', 'Fórum',
 ];
 
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
 export default function TelaAdicionarEvento() {
   const eventoDb = useEventoDatabase();
 
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [data, setData] = useState('25 Outubro 2026');
+  const [dataObjeto, setDataObjeto] = useState(new Date());
+  const [textoDataFormatada, setTextoDataFormatada] = useState('Selecione a data do evento');
+  const [mostrarDatePickerIOS, setMostrarDatePickerIOS] = useState(false);
+
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<string[]>([]);
   const [presencial, setPresencial] = useState(false);
   const [online, setOnline] = useState(false);
@@ -39,6 +49,67 @@ export default function TelaAdicionarEvento() {
   const [instagram, setInstagram] = useState('');
   const [linkedin, setLinkedin] = useState('');
   const [carregando, setCarregando] = useState(false);
+
+  // Função para resetar todos os campos do formulário
+  const limparFormulario = useCallback(() => {
+    setNome('');
+    setDescricao('');
+    setDataObjeto(new Date());
+    setTextoDataFormatada('Selecione a data do evento');
+    setCategoriasSelecionadas([]);
+    setPresencial(false);
+    setOnline(false);
+    setCertificado(null);
+    setGratuito(false);
+    setPreco('');
+    setSite('');
+    setFacebook('');
+    setInstagram('');
+    setLinkedin('');
+    setMostrarDatePickerIOS(false);
+  }, []);
+
+  // Limpa o formulário sempre que o usuário sai desta tela
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        limparFormulario();
+      };
+    }, [limparFormulario])
+  );
+
+  function formatarDataTexto(date: Date) {
+    const dia = String(date.getDate()).padStart(2, '0');
+    const mes = MESES[date.getMonth()];
+    const ano = date.getFullYear();
+    return `${dia} ${mes} ${ano}`;
+  }
+
+  // Abertura do Calendário nativo
+  function abrirCalendario() {
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: dataObjeto,
+        onChange: (event: DateTimePickerEvent, selectedDate?: Date) => {
+          if (event.type === 'set' && selectedDate) {
+            setDataObjeto(selectedDate);
+            setTextoDataFormatada(formatarDataTexto(selectedDate));
+          }
+        },
+        mode: 'date',
+        is24Hour: true,
+      });
+    } else {
+      setMostrarDatePickerIOS(true);
+    }
+  }
+
+  function onChangeDataIOS(event: DateTimePickerEvent, selectedDate?: Date) {
+    if (selectedDate) {
+      setDataObjeto(selectedDate);
+      setTextoDataFormatada(formatarDataTexto(selectedDate));
+    }
+  }
 
   function toggleCategoria(cat: string) {
     if (categoriasSelecionadas.includes(cat)) {
@@ -54,6 +125,11 @@ export default function TelaAdicionarEvento() {
       return;
     }
 
+    if (textoDataFormatada === 'Selecione a data do evento') {
+      Alert.alert('Atenção', 'Por favor, selecione a data do evento.');
+      return;
+    }
+
     if (categoriasSelecionadas.length === 0) {
       Alert.alert('Atenção', 'Selecione ao menos uma categoria.');
       return;
@@ -65,7 +141,7 @@ export default function TelaAdicionarEvento() {
       await eventoDb.criarEvento({
         titulo: nome,
         descricao,
-        data,
+        data: textoDataFormatada,
         categorias: JSON.stringify(categoriasSelecionadas),
         presencial: presencial ? 1 : 0,
         online: online ? 1 : 0,
@@ -78,6 +154,8 @@ export default function TelaAdicionarEvento() {
         linkedin,
         imagemUri: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&auto=format&fit=crop',
       });
+
+      limparFormulario();
 
       Alert.alert('Sucesso', 'Evento cadastrado com sucesso!', [
         {
@@ -115,10 +193,30 @@ export default function TelaAdicionarEvento() {
           onChangeText={setDescricao}
         />
 
-        <TouchableOpacity style={styles.btnData}>
+        {/* Botão de Data que abre o calendário nativo */}
+        <TouchableOpacity style={styles.btnData} onPress={abrirCalendario}>
           <Ionicons name="calendar-outline" size={16} color={colors.white} />
-          <Text style={styles.textoBtnData}>Selecione a data do evento</Text>
+          <Text style={styles.textoBtnData}>{textoDataFormatada}</Text>
         </TouchableOpacity>
+
+        {/* Renderização condicional no iOS */}
+        {Platform.OS === 'ios' && mostrarDatePickerIOS && (
+          <View style={{ backgroundColor: colors.gray[800], borderRadius: 8, marginTop: 8 }}>
+            <DateTimePicker
+              value={dataObjeto}
+              mode="date"
+              display="spinner"
+              textColor={colors.white}
+              onChange={onChangeDataIOS}
+            />
+            <TouchableOpacity
+              onPress={() => setMostrarDatePickerIOS(false)}
+              style={{ padding: 8, alignItems: 'center' }}
+            >
+              <Text style={{ color: colors.orange[500], fontWeight: 'bold' }}>Confirmar Data</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <Text style={styles.rotuloSecao}>Selecione a(s) categoria(s) do evento</Text>
         <View style={styles.gridCategorias}>
@@ -168,7 +266,7 @@ export default function TelaAdicionarEvento() {
             placeholder="R$ 00,00"
             placeholderTextColor={colors.gray[600]}
             editable={!gratuito}
-            value={preco}
+            value={gratuito ? 'GRATUITO' : preco}
             onChangeText={setPreco}
           />
           <TouchableOpacity style={styles.itemCheck} onPress={() => setGratuito(!gratuito)}>
