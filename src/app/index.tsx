@@ -211,6 +211,7 @@ export default function TelaInicio() {
                       data={item.data}
                       presencial={!!item.presencial}
                       online={!!item.online}
+                      imagemUri={item.imagemUri}
                       onPress={() => router.navigate(`/evento/${item.id}` as any)}
                     />
                   ))}
@@ -276,7 +277,7 @@ export default function TelaInicio() {
                   data={item.data}
                   preco={item.gratuito ? 'GRATUITO' : item.preco || 'Sob consulta'}
                   gratuito={!!item.gratuito}
-                  imagem={item.imagemUri || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&auto=format&fit=crop'}
+                  imagem={item.imagemUri}
                   onPress={() => router.navigate(`/evento/${item.id}` as any)}
                 />
               ))}

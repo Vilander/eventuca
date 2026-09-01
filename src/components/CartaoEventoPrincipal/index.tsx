@@ -1,75 +1,81 @@
+import { BannerPadrao } from '@/components/BannerPadrao';
 import { colors } from '@/styles/colors';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './styles';
 
-type Props = {
+type CartaoEventoPrincipalProps = {
   titulo: string;
   descricao: string;
   data: string;
-  presencial?: boolean; 
-  online?: boolean; 
-  onPress: () => void;
+  presencial: boolean;
+  online: boolean;
+  imagemUri?: string;
+  onPress?: () => void;
 };
 
-export function CartaoEventoPrincipal({ 
-  titulo, 
-  descricao, 
-  data, 
-  presencial = false, 
-  online = false, 
-  onPress 
-}: Props) {
-  const [favorito, setFavorito] = useState(false);
-
+export function CartaoEventoPrincipal({
+  titulo,
+  descricao,
+  data,
+  presencial,
+  online,
+  imagemUri,
+  onPress,
+}: CartaoEventoPrincipalProps) {
   return (
-    <View style={styles.card}>
-      <View>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.85}
+      onPress={onPress}
+    >
+      {/* Imagem do Evento ou Fallback do Mascote */}
+      <View style={styles.containerImagem}>
+        {imagemUri && imagemUri.trim().length > 0 ? (
+          <Image source={{ uri: imagemUri }} style={styles.imagem} resizeMode="contain" />
+        ) : (
+          <BannerPadrao />
+        )}
+      </View>
+
+      {/* Tag EVENTO + Ícone de Favorito */}
+      <View style={styles.linhaTopo}>
         <View style={styles.badgeEvento}>
           <Text style={styles.textoBadge}>EVENTO</Text>
         </View>
-        <Text style={styles.titulo} numberOfLines={2}>{titulo}</Text>
-        <Text style={styles.descricao} numberOfLines={4}>{descricao}</Text>
+        <Ionicons name="heart-outline" size={16} color={colors.red[500]} />
       </View>
 
-      <View>
-        <View style={styles.linhaData}>
-          <Ionicons name="calendar-outline" size={16} color={colors.orange[500]} />
-          <Text style={styles.textoData}>{data}</Text>
-        </View>
+      <Text style={styles.titulo} numberOfLines={2}>
+        {titulo}
+      </Text>
 
-        <View style={styles.linhaTags}>
-          {/* Tag Presencial */}
-          <View style={[styles.tagModalidade, presencial && styles.tagModalidadeAtiva]}>
-            <Text style={[styles.textoTag, presencial && styles.textoTagAtiva]}>
-              PRESENCIAL
-            </Text>
+      {descricao ? (
+        <Text style={styles.descricao} numberOfLines={2}>
+          {descricao}
+        </Text>
+      ) : null}
+
+      <View style={styles.linhaData}>
+        <Ionicons name="calendar-outline" size={13} color={colors.orange[500]} />
+        <Text style={styles.textoData}>{data}</Text>
+      </View>
+
+      <View style={styles.linhaModalidade}>
+        {presencial && (
+          <View style={styles.badgeModalidade}>
+            <Text style={styles.textoBadgeModalidade}>PRESENCIAL</Text>
           </View>
-
-          {/* Tag On-line */}
-          <View style={[styles.tagModalidade, online && styles.tagModalidadeAtiva]}>
-            <Text style={[styles.textoTag, online && styles.textoTagAtiva]}>
+        )}
+        {online && (
+          <View style={[styles.badgeModalidade, styles.badgeModalidadeOnline]}>
+            <Text style={[styles.textoBadgeModalidade, styles.textoBadgeModalidadeOnline]}>
               ON-LINE
             </Text>
           </View>
-        </View>
-
-        <View style={styles.rodape}>
-          <TouchableOpacity style={styles.botaoDetalhes} onPress={onPress}>
-            <Ionicons name="exit-outline" size={14} color={colors.orange[400]} />
-            <Text style={styles.textoDetalhes}>Mais detalhes</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => setFavorito(!favorito)}>
-            <Ionicons
-              name={favorito ? 'heart' : 'heart-outline'}
-              size={18}
-              color={colors.red[500]}
-            />
-          </TouchableOpacity>
-        </View>
+        )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }

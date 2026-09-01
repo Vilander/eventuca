@@ -3,7 +3,7 @@ import { Image, Text, View } from 'react-native';
 import { styles } from './styles';
 
 // Certifique-se de ajustar o caminho da imagem conforme a estrutura do seu projeto
-import logoImg from '../../../assets/images/logo.png';
+import logoImg from '../../../assets/logo.png';
 
 export default function Header() {
   return (

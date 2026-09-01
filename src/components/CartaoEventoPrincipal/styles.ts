@@ -2,26 +2,40 @@ import { colors } from '@/styles/colors';
 import { Dimensions, StyleSheet } from 'react-native';
 
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.44;
 
 export const styles = StyleSheet.create({
   card: {
-    width: width * 0.51,
-    height: 280,
+    width: CARD_WIDTH,
     backgroundColor: colors.gray[900],
     borderRadius: 12,
-    padding: 12,
-    marginRight: 12,
     borderWidth: 1,
-    borderColor: colors.orange[600],
+    borderColor: colors.orange[500],
+    padding: 10,
     justifyContent: 'space-between',
   },
+  containerImagem: {
+    width: '100%',
+    height: 90,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  imagem: {
+    width: '100%',
+    height: '100%',
+  },
+  linhaTopo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   badgeEvento: {
-    alignSelf: 'flex-start',
     backgroundColor: colors.orange[500],
+    borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
-    marginBottom: 6,
   },
   textoBadge: {
     color: colors.white,
@@ -30,72 +44,47 @@ export const styles = StyleSheet.create({
   },
   titulo: {
     color: colors.white,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   descricao: {
     color: colors.gray[400],
     fontSize: 10,
-    marginBottom: 12,
-    lineHeight: 14,
+    lineHeight: 13,
+    marginBottom: 6,
   },
   linhaData: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
     marginBottom: 8,
   },
   textoData: {
-    color: colors.gray[200],
-    fontSize: 11,
-    fontWeight: '500',
+    color: colors.gray[300],
+    fontSize: 10,
+    fontWeight: '600',
   },
-  linhaTags: {
+  linhaModalidade: {
     flexDirection: 'row',
-    gap: 4,
-    marginBottom: 12,
+    gap: 6,
+    flexWrap: 'wrap',
   },
-  tagModalidade: {
-    borderWidth: 1,
-    borderColor: colors.orange[500],
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  textoTag: {
-    color: colors.orange[400],
-    fontSize: 8,
-    fontWeight: 'bold',
-  },
-  tagModalidadeAtiva: {
+  badgeModalidade: {
     backgroundColor: colors.orange[500],
-    borderColor: colors.orange[500],
-    paddingHorizontal: 4,
-    paddingVertical: 2,
     borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
-  textoTagAtiva: {
-    color: colors.gray[900], // Texto escuro para contraste no fundo laranja
+  badgeModalidadeOnline: {
+    backgroundColor: colors.gray[700],
+  },
+  textoBadgeModalidade: {
+    color: colors.gray[900],
     fontSize: 8,
     fontWeight: 'bold',
   },
-  rodape: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: colors.gray[800],
-    paddingTop: 8,
-  },
-  botaoDetalhes: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  textoDetalhes: {
-    color: colors.orange[400],
-    fontSize: 11,
-    fontWeight: 'bold',
+  textoBadgeModalidadeOnline: {
+    color: colors.white,
   },
 });

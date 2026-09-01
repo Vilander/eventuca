@@ -8,10 +8,12 @@ import DateTimePicker, {
   DateTimePickerAndroid,
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   Text,
@@ -34,8 +36,9 @@ export default function TelaAdicionarEvento() {
 
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [imagemUri, setImagemUri] = useState<string | null>(null);
   const [dataObjeto, setDataObjeto] = useState(new Date());
-  const [textoDataFormatada, setTextoDataFormatada] = useState('Selecione a data do evento');
+  const [textoDataFormatada, setTextoDataFormatada] = useState('Selecione a data de inicio do evento');
   const [mostrarDatePickerIOS, setMostrarDatePickerIOS] = useState(false);
 
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<string[]>([]);
@@ -50,12 +53,34 @@ export default function TelaAdicionarEvento() {
   const [linkedin, setLinkedin] = useState('');
   const [carregando, setCarregando] = useState(false);
 
+  // Selecionar imagem da galeria
+  async function handleSelecionarImagem() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permissão necessária', 'Precisamos de acesso à sua galeria para adicionar fotos aos eventos.');
+      return;
+    }
+
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!resultado.canceled && resultado.assets[0]?.uri) {
+      setImagemUri(resultado.assets[0].uri);
+    }
+  }
+
   // Função para resetar todos os campos do formulário
   const limparFormulario = useCallback(() => {
     setNome('');
     setDescricao('');
+    setImagemUri(null);
     setDataObjeto(new Date());
-    setTextoDataFormatada('Selecione a data do evento');
+    setTextoDataFormatada('Selecione a data de inicio do evento');
     setCategoriasSelecionadas([]);
     setPresencial(false);
     setOnline(false);
@@ -69,7 +94,6 @@ export default function TelaAdicionarEvento() {
     setMostrarDatePickerIOS(false);
   }, []);
 
-  // Limpa o formulário sempre que o usuário sai desta tela
   useFocusEffect(
     useCallback(() => {
       return () => {
@@ -85,7 +109,6 @@ export default function TelaAdicionarEvento() {
     return `${dia} ${mes} ${ano}`;
   }
 
-  // Abertura do Calendário nativo
   function abrirCalendario() {
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
@@ -125,7 +148,7 @@ export default function TelaAdicionarEvento() {
       return;
     }
 
-    if (textoDataFormatada === 'Selecione a data do evento') {
+    if (textoDataFormatada === 'Selecione a data de inicio do evento') {
       Alert.alert('Atenção', 'Por favor, selecione a data do evento.');
       return;
     }
@@ -152,7 +175,7 @@ export default function TelaAdicionarEvento() {
         facebook,
         instagram,
         linkedin,
-        imagemUri: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&auto=format&fit=crop',
+        imagemUri: imagemUri || '', // Se vazio, a tela de detalhes usará o BannerPadrao
       });
 
       limparFormulario();
@@ -193,13 +216,46 @@ export default function TelaAdicionarEvento() {
           onChangeText={setDescricao}
         />
 
-        {/* Botão de Data que abre o calendário nativo */}
+        {/* Seletor e Pré-visualização de Imagem */}
+        <Text style={styles.rotuloSecao}>Banner do Evento (Opcional)</Text>
+        {imagemUri ? (
+          <View style={{ position: 'relative', marginTop: 6 }}>
+            <Image
+              source={{ uri: imagemUri }}
+              style={{ width: '100%', height: 160, borderRadius: 8, borderWidth: 1, borderColor: colors.orange[500] }}
+              resizeMode="cover"
+            />
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                padding: 6,
+                borderRadius: 20,
+              }}
+              onPress={() => setImagemUri(null)}
+            >
+              <Ionicons name="trash-outline" size={18} color={colors.red[500]} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.botaoAdicionarImagem}
+            activeOpacity={0.7}
+            onPress={handleSelecionarImagem}
+          >
+            <Ionicons name="image-outline" size={20} color={colors.orange[400]} style={{ marginBottom: 4 }} />
+            <Text style={styles.textoBotaoImagem}>Selecionar imagem da galeria</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Botão de Data */}
         <TouchableOpacity style={styles.btnData} onPress={abrirCalendario}>
           <Ionicons name="calendar-outline" size={16} color={colors.white} />
           <Text style={styles.textoBtnData}>{textoDataFormatada}</Text>
         </TouchableOpacity>
 
-        {/* Renderização condicional no iOS */}
         {Platform.OS === 'ios' && mostrarDatePickerIOS && (
           <View style={{ backgroundColor: colors.gray[800], borderRadius: 8, marginTop: 8 }}>
             <DateTimePicker

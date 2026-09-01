@@ -1,76 +1,63 @@
 import { colors } from '@/styles/colors';
-import { Dimensions, StyleSheet } from 'react-native';
-
-const { width } = Dimensions.get('window');
+import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   card: {
-    width: width * 0.48,
-    height: 90,
+    width: 240,
     backgroundColor: colors.gray[900],
-    borderRadius: 8,
-    padding: 8,
-    marginRight: 10,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.gray[800],
+    padding: 8,
+    marginRight: 10,
     flexDirection: 'row',
+    gap: 10,
     alignItems: 'center',
-    gap: 8,
   },
-  imagemCard: {
-    width: 50,
-    height: 50,
+  containerMiniatura: {
+    width: 76,
+    height: 56,
     borderRadius: 6,
+    overflow: 'hidden',
     backgroundColor: colors.gray[800],
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  conteudoCard: {
+  miniatura: {
+    width: '100%',
+    height: '100%',
+  },
+  info: {
     flex: 1,
     justifyContent: 'center',
   },
   titulo: {
     color: colors.white,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   linhaData: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   textoData: {
     color: colors.gray[400],
-    fontSize: 12,
+    fontSize: 10,
   },
-  badgeGratuito: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.pink[500],
-    borderRadius: 12,
-    paddingVertical: 2,
-    paddingHorizontal: 6,
+  rodape: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.gray[900],
   },
-  textoGratuito: {
+  etiquetaPreco: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  precoGratuito: {
     color: colors.pink[400],
-    fontSize: 12,
-    fontWeight: 'bold',
   },
-  badgePago: {
-    borderWidth: 1,
-    borderColor: colors.green[500],
-    borderRadius: 12,
-    paddingVertical: 2,
-    paddingHorizontal:10,
-    alignSelf: 'flex-start',
-    backgroundColor: colors.gray[900],
-  },
-  textoPago: {
+  precoPago: {
     color: colors.green[500],
-    fontSize: 12,
-    fontWeight: 'bold',
   },
 });
