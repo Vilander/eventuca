@@ -20,6 +20,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 8,
+    backgroundColor: colors.gray[800],
   },
   imagem: {
     width: '100%',
@@ -27,7 +28,6 @@ export const styles = StyleSheet.create({
   },
   linhaTopo: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
   },

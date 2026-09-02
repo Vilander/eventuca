@@ -2,7 +2,7 @@ import { useSQLiteContext } from "expo-sqlite";
 
 export type EventoRegistro = {
   id: number;
-  titulo:string;
+  titulo: string;
   descricao?: string;
   data: string;
   categorias: string;
@@ -21,7 +21,7 @@ export type EventoRegistro = {
 
 export type EventoCriacao = Omit<EventoRegistro, 'id'>;
 
-export function useEventoDatabase(){
+export function useEventoDatabase() {
   const database = useSQLiteContext();
 
   // Inserir novo evento
@@ -81,9 +81,62 @@ export function useEventoDatabase(){
     }
   }
 
+  // ================= OPERAÇÕES DE FAVORITOS =================
+
+  // Verifica se o evento está favoritado
+  async function isFavorito(eventoId: number, usuarioId: number = 1): Promise<boolean> {
+    try {
+      const consulta = 'SELECT id FROM favoritos WHERE evento_id = ? AND usuario_id = ?';
+      const registro = await database.getFirstAsync<{ id: number }>(consulta, [eventoId, usuarioId]);
+      return !!registro;
+    } catch (erro) {
+      console.error('Erro ao verificar favorito:', erro);
+      return false;
+    }
+  }
+
+  // Alterna entre favoritar e remover favorito
+  async function toggleFavorito(eventoId: number, usuarioId: number = 1): Promise<boolean> {
+    const jaFavorito = await isFavorito(eventoId, usuarioId);
+
+    if (jaFavorito) {
+      await database.runAsync(
+        'DELETE FROM favoritos WHERE evento_id = ? AND usuario_id = ?',
+        [eventoId, usuarioId]
+      );
+      return false; // Desfavoritado
+    } else {
+      await database.runAsync(
+        'INSERT INTO favoritos (evento_id, usuario_id) VALUES (?, ?)',
+        [eventoId, usuarioId]
+      );
+      return true; // Favoritado
+    }
+  }
+
+  // Lista todos os eventos que foram favoritados
+  async function listarFavoritos(usuarioId: number = 1): Promise<EventoRegistro[]> {
+    try {
+      const consulta = `
+        SELECT e.* 
+        FROM eventos e
+        INNER JOIN favoritos f ON f.evento_id = e.id
+        WHERE f.usuario_id = ?
+        ORDER BY f.id DESC
+      `;
+      return await database.getAllAsync<EventoRegistro>(consulta, [usuarioId]);
+    } catch (erro) {
+      console.error('Erro ao listar favoritos:', erro);
+      return [];
+    }
+  }
+
   return {
     criarEvento,
     listarTodos,
     buscarPorId,
+    isFavorito,
+    toggleFavorito,
+    listarFavoritos,
   };
 }

@@ -1,88 +1,121 @@
+import CartaoEvento from '@/components/CartaoEvento';
 import Header from '@/components/Header';
-import dadosEventos from '@/database/dadosEventos';
+import { EventoRegistro, useEventoDatabase } from '@/database/useEventoDatabase';
 import { colors } from '@/styles/colors';
 import { globalStyles } from '@/styles/globalStyles';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
-export default function TelaEventosSalvos() {
-  // Simulando IDs de eventos salvos (futuramente virá do AsyncStorage ou do SQLite)
-  const [idsSalvos, setIdsSalvos] = useState<string[]>(['1', '3']);
+export default function TelaSalvos() {
+  const eventoDb = useEventoDatabase();
+  const [salvos, setSalvos] = useState<EventoRegistro[]>([]);
+  const [carregando, setCarregando] = useState(true);
 
-  // Filtra apenas os eventos que estão na lista de salvos
-  const eventosSalvos = dadosEventos.filter((evento) => idsSalvos.includes(evento.id));
+  useFocusEffect(
+    useCallback(() => {
+      async function carregarSalvos() {
+        try {
+          setCarregando(true);
+          const favoritos = await eventoDb.listarFavoritos();
+          setSalvos(favoritos);
+        } catch (erro) {
+          console.error('Erro ao carregar favoritos:', erro);
+        } finally {
+          setCarregando(false);
+        }
+      }
 
-  const removerDosSalvos = (id: string) => {
-    setIdsSalvos(idsSalvos.filter((itemId) => itemId !== id));
-  };
+      carregarSalvos();
+    }, [])
+  );
 
   return (
     <View style={globalStyles.container}>
       <Header />
-      
-      <ScrollView contentContainerStyle={globalStyles.espacamentoConteudo}>
-        <Text style={globalStyles.textoTitulo}>Eventos salvos</Text>
-        <Text style={globalStyles.textoSubtitulo}>Gerencie seus eventos favoritos.</Text>
 
-        {eventosSalvos.length === 0 ? (
-          <View style={{ marginTop: 40, alignItems: 'center' }}>
-            <Ionicons name="heart-outline" size={48} color={colors.gray[600]} style={{ marginBottom: 12 }} />
-            <Text style={{ color: colors.gray[400], fontSize: 14 }}>Nenhum evento salvo ainda.</Text>
+      <View style={styles.conteudo}>
+        <View style={styles.cabecalhoSecao}>
+          <Ionicons name="heart" size={20} color={colors.orange[500]} />
+          <Text style={styles.tituloSecao}>Meus Eventos Salvos</Text>
+        </View>
+
+        {carregando ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={colors.orange[500]} />
           </View>
         ) : (
-          <View style={{ marginTop: 16, gap: 12 }}>
-            {eventosSalvos.map((evento) => (
-              <TouchableOpacity
-                key={evento.id}
-                style={{
-                  backgroundColor: colors.gray[900],
-                  borderRadius: 8,
-                  padding: 12,
-                  borderWidth: 1,
-                  borderColor: colors.gray[800],
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                }}
-                activeOpacity={0.8}
-                onPress={() => router.navigate(`/evento/${evento.id}` as any)}
-              >
-                {evento.imagem && (
-                  <Image
-                    source={evento.imagem}
-                    style={{ width: 60, height: 60, borderRadius: 6 }}
-                    resizeMode="cover"
-                  />
-                )}
-
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.white, fontSize: 14, fontWeight: 'bold', marginBottom: 4 }} numberOfLines={1}>
-                    {evento.titulo}
-                  </Text>
-                  
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 }}>
-                    <Ionicons name="calendar-outline" size={12} color={colors.gray[400]} />
-                    <Text style={{ color: colors.gray[400], fontSize: 11 }}>{evento.data}</Text>
-                  </View>
-
-                  <Text style={{ color: colors.orange[400], fontSize: 11, fontWeight: 'bold' }}>
-                    {evento.gratuito ? 'GRATUITO' : (evento.preco || evento.categoria)}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  onPress={() => removerDosSalvos(evento.id)}
-                  style={{ padding: 8 }}
-                >
-                  <Ionicons name="heart" size={22} color={colors.red[500]} />
-                </TouchableOpacity>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <FlatList
+            data={salvos}
+            keyExtractor={(item) => String(item.id)}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listaContainer}
+            renderItem={({ item }) => (
+              <CartaoEvento
+                evento={item}
+                onPress={(evt) => router.push(`/evento/${evt.id}` as any)}
+              />
+            )}
+            ListEmptyComponent={
+              <View style={styles.centerContainer}>
+                <Ionicons name="heart-dislike-outline" size={54} color={colors.gray[600]} />
+                <Text style={styles.textoVazio}>Nenhum evento salvo ainda.</Text>
+                <Text style={styles.subtextoVazio}>
+                  Toque no ícone de coração nos eventos para salvá-los aqui.
+                </Text>
+              </View>
+            }
+          />
         )}
-      </ScrollView>
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  conteudo: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  cabecalhoSecao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tituloSecao: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  listaContainer: {
+    paddingBottom: 24,
+  },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  textoVazio: {
+    color: colors.gray[300],
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginTop: 12,
+  },
+  subtextoVazio: {
+    color: colors.gray[500],
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 6,
+    paddingHorizontal: 30,
+  },
+});

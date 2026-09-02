@@ -1,3 +1,4 @@
+import { BannerPadrao } from '@/components/BannerPadrao';
 import Header from '@/components/Header';
 import { EventoRegistro, useEventoDatabase } from '@/database/useEventoDatabase';
 import { colors } from '@/styles/colors';
@@ -14,7 +15,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { BannerPadrao } from '../../components/BannerPadrao';
 import { styles } from './styles';
 
 export default function TelaDetalhesEvento() {
@@ -25,25 +25,40 @@ export default function TelaDetalhesEvento() {
   const [carregando, setCarregando] = useState(true);
   const [favorito, setFavorito] = useState(false);
 
-  // Busca o evento no SQLite sempre que o ID mudar ou a tela for aberta
+  // Busca dados do evento e o status de favorito no SQLite
   useFocusEffect(
     useCallback(() => {
-      async function carregarEvento() {
+      async function carregarDados() {
         if (!id) return;
         try {
           setCarregando(true);
-          const registro = await eventoDb.buscarPorId(Number(id));
+          const eventoId = Number(id);
+          const [registro, statusFavorito] = await Promise.all([
+            eventoDb.buscarPorId(eventoId),
+            eventoDb.isFavorito(eventoId),
+          ]);
           setEvento(registro ?? null);
+          setFavorito(statusFavorito);
         } catch (erro) {
-          console.error('Erro ao buscar detalhes do evento:', erro);
+          console.error('Erro ao carregar detalhes do evento:', erro);
         } finally {
           setCarregando(false);
         }
       }
 
-      carregarEvento();
+      carregarDados();
     }, [id])
   );
+
+  async function handleToggleFavorito() {
+    if (!id) return;
+    try {
+      const novoStatus = await eventoDb.toggleFavorito(Number(id));
+      setFavorito(novoStatus);
+    } catch (erro) {
+      console.error('Erro ao alternar favorito:', erro);
+    }
+  }
 
   const abrirLink = (url?: string) => {
     if (url && url.trim().length > 0) {
@@ -51,7 +66,6 @@ export default function TelaDetalhesEvento() {
     }
   };
 
-  // Indicador de Carregamento
   if (carregando) {
     return (
       <View style={globalStyles.container}>
@@ -63,7 +77,6 @@ export default function TelaDetalhesEvento() {
     );
   }
 
-  // Tratamento de evento não encontrado
   if (!evento) {
     return (
       <View style={globalStyles.container}>
@@ -85,7 +98,6 @@ export default function TelaDetalhesEvento() {
     );
   }
 
-  // Decodifica a string JSON de categorias salva no banco
   let listaCategorias: string[] = [];
   try {
     listaCategorias = JSON.parse(evento.categorias);
@@ -97,7 +109,6 @@ export default function TelaDetalhesEvento() {
     <View style={globalStyles.container}>
       <Header />
 
-      {/* Botão Voltar */}
       <TouchableOpacity
         style={styles.botaoVoltar}
         onPress={() => router.back()}
@@ -108,13 +119,13 @@ export default function TelaDetalhesEvento() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.cardDetalhes}>
-          {/* Header do Card: Badge EVENTO + Botão de Favorito */}
+          {/* Header do Card: Badge EVENTO + Botão de Favorito Persistente */}
           <View style={styles.headerCard}>
             <View style={styles.badgeEvento}>
               <Text style={styles.textoBadgeEvento}>EVENTO</Text>
             </View>
 
-            <TouchableOpacity onPress={() => setFavorito(!favorito)}>
+            <TouchableOpacity onPress={handleToggleFavorito} activeOpacity={0.7}>
               <Ionicons
                 name={favorito ? 'heart' : 'heart-outline'}
                 size={24}
@@ -123,14 +134,12 @@ export default function TelaDetalhesEvento() {
             </TouchableOpacity>
           </View>
 
-          {/* Título e Data */}
           <Text style={styles.tituloEvento}>{evento.titulo}</Text>
           <View style={styles.linhaData}>
             <Ionicons name="calendar-outline" size={16} color={colors.orange[500]} />
             <Text style={styles.textoData}>{evento.data}</Text>
           </View>
 
-          {/* Categorias */}
           <View style={styles.linhaCategorias}>
             {listaCategorias.map((cat, index) => (
               <View key={index} style={styles.chipCategoria}>
@@ -139,7 +148,6 @@ export default function TelaDetalhesEvento() {
             ))}
           </View>
 
-          {/* Badges de Formato, Preço e Certificado */}
           <View style={styles.linhaBadges}>
             {!!evento.presencial && (
               <View style={styles.badgePresencial}>
@@ -174,10 +182,14 @@ export default function TelaDetalhesEvento() {
             )}
           </View>
 
-          {/* Imagem do Evento ou Banner Padrão Fallback */}
+          {/* Imagem do Evento ou Fallback */}
           {evento.imagemUri && evento.imagemUri.trim().length > 0 ? (
             <View style={styles.containerImagem}>
-              <Image source={{ uri: evento.imagemUri }} style={styles.imagemBanner} resizeMode="contain" />
+              <Image
+                source={{ uri: evento.imagemUri }}
+                style={styles.imagemBanner}
+                resizeMode="contain"
+              />
             </View>
           ) : (
             <View style={[styles.containerImagem, { height: 180 }]}>
@@ -185,12 +197,10 @@ export default function TelaDetalhesEvento() {
             </View>
           )}
 
-          {/* Descrição Completa */}
           {evento.descricao ? (
             <Text style={styles.textoDescricao}>{evento.descricao}</Text>
           ) : null}
 
-          {/* Rodapé: Botão de Acesso ao Site e Links Sociais */}
           <View style={styles.rodapeAcoes}>
             <TouchableOpacity
               style={[

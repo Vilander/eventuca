@@ -1,6 +1,4 @@
 import { BannerPadrao } from '@/components/BannerPadrao';
-import { colors } from '@/styles/colors';
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './styles';
@@ -33,18 +31,21 @@ export function CartaoEventoPrincipal({
       {/* Imagem do Evento ou Fallback do Mascote */}
       <View style={styles.containerImagem}>
         {imagemUri && imagemUri.trim().length > 0 ? (
-          <Image source={{ uri: imagemUri }} style={styles.imagem} resizeMode="contain" />
+          <Image
+            source={{ uri: imagemUri }}
+            style={styles.imagem}
+            resizeMode="contain"
+          />
         ) : (
-          <BannerPadrao />
+          <BannerPadrao altura={90} />
         )}
       </View>
 
-      {/* Tag EVENTO + Ícone de Favorito */}
+      {/* Tag EVENTO (sem o ícone de coração) */}
       <View style={styles.linhaTopo}>
         <View style={styles.badgeEvento}>
           <Text style={styles.textoBadge}>EVENTO</Text>
         </View>
-        <Ionicons name="heart-outline" size={16} color={colors.red[500]} />
       </View>
 
       <Text style={styles.titulo} numberOfLines={2}>
@@ -58,8 +59,7 @@ export function CartaoEventoPrincipal({
       ) : null}
 
       <View style={styles.linhaData}>
-        <Ionicons name="calendar-outline" size={13} color={colors.orange[500]} />
-        <Text style={styles.textoData}>{data}</Text>
+        <Text style={styles.textoData}>📅 {data}</Text>
       </View>
 
       <View style={styles.linhaModalidade}>
