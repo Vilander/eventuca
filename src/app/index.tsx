@@ -1,3 +1,11 @@
+import { CartaoEventoPrincipal } from '@/components/CartaoEventoPrincipal';
+import { CartaoRecomendado } from '@/components/CartaoRecomendado';
+import { FiltroMeses, MesItem } from '@/components/FiltroMeses';
+import Header from '@/components/Header';
+import { CATEGORIAS_FILTRO } from '@/constants/categorias';
+import { EventoRegistro, useEventoDatabase } from '@/database/useEventoDatabase';
+import { colors } from '@/styles/colors';
+import { globalStyles } from '@/styles/globalStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -10,20 +18,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-import { CartaoEventoPrincipal } from '@/components/CartaoEventoPrincipal';
-import { CartaoRecomendado } from '@/components/CartaoRecomendado';
-import { FiltroMeses, MesItem } from '@/components/FiltroMeses';
-import Header from '@/components/Header';
-import { EventoRegistro, useEventoDatabase } from '@/database/useEventoDatabase';
-import { colors } from '@/styles/colors';
-import { globalStyles } from '@/styles/globalStyles';
 import { styles } from './styles';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.44 + 12;
 
-const CATEGORIAS = ['Todos', 'Meetup', 'Conferência', 'Hackathon', 'Bootcamp', 'Webinar', 'Fórum'];
+//const CATEGORIAS = ['Todos', 'Meetup', 'Conferência', 'Hackathon', 'Bootcamp', 'Webinar', 'Fórum'];
 const MESES_NOMES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
 export default function TelaInicio() {
@@ -252,7 +252,7 @@ export default function TelaInicio() {
               showsHorizontalScrollIndicator={false}
               style={{ marginBottom: 12 }}
             >
-              {CATEGORIAS.map((cat) => {
+              {CATEGORIAS_FILTRO.map((cat) => {
                 const isAtivo = categoriaSelecionada === cat;
                 return (
                   <TouchableOpacity

@@ -23,11 +23,9 @@ import {
 } from 'react-native';
 import { styles } from './styles';
 
-const OPCOES_CATEGORIAS = [
-  'Hackathon', 'Workshop', 'Bootcamp', 'Game Jam',
-  'Meetup', 'Tech Talk', 'Happy Hour', 'Conferência',
-  'Summit', 'Feira Tech', 'Webinar', 'Fórum',
-];
+import { CATEGORIAS_EVENTO } from '@/constants/categorias';
+
+const OPCOES_CATEGORIAS = CATEGORIAS_EVENTO;
 
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
