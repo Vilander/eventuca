@@ -1,16 +1,29 @@
 import { Botao } from '@/components/Botao';
 import Header from '@/components/Header';
+import { UsuarioRegistro, useEventoDatabase } from '@/database/useEventoDatabase';
 import { colors } from '@/styles/colors';
 import { globalStyles } from '@/styles/globalStyles';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import {
+  Alert,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { styles } from './styles';
 
 export default function TelaPerfil() {
-  // Estados para controlar qual tela exibir: 'perfil', 'login', 'cadastro'
-  const [tipoTela, setTipoTela] = useState<'perfil' | 'login' | 'cadastro'>('perfil');
+  const eventoDb = useEventoDatabase();
 
-  // Estados do Cadastro de Perfil
+  const [tipoTela, setTipoTela] = useState<'perfil' | 'login' | 'cadastro'>('perfil');
+  const [usuarioLogado, setUsuarioLogado] = useState<UsuarioRegistro | null>(null);
+  const [metricas, setMetricas] = useState({ totalCriados: 0, totalSalvos: 0 });
+
+  // Campos de Cadastro / Edição
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [endereco, setEndereco] = useState('');
@@ -22,86 +35,275 @@ export default function TelaPerfil() {
   const [repitaSenha, setRepitaSenha] = useState('');
   const [receberNotificacoes, setReceberNotificacoes] = useState(false);
 
-  // Estados de Login
+  // Campos de Login
   const [loginInput, setLoginInput] = useState('');
   const [loginSenha, setLoginSenha] = useState('');
-
   const [carregando, setCarregando] = useState(false);
 
-  function handleSalvarPerfil() {
-    setCarregando(true);
-    setTimeout(() => {
-      setCarregando(false);
-      setTipoTela('perfil'); // Vai para a tela de perfil logado após cadastrar
-    }, 1500);
+  // Carrega e sincroniza o usuário que possui a sessão ativa no SQLite
+  const carregarDadosPerfil = useCallback(async () => {
+    try {
+      const usuario = await eventoDb.obterUsuarioLogado();
+      if (usuario) {
+        setUsuarioLogado(usuario);
+        const dadosMetricas = await eventoDb.obterMetricasUsuario();
+        setMetricas(dadosMetricas);
+        setTipoTela('perfil');
+      } else {
+        setUsuarioLogado(null);
+        setTipoTela('login');
+      }
+    } catch (erro) {
+      console.error('Erro ao carregar dados do usuário:', erro);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarDadosPerfil();
+    }, [carregarDadosPerfil])
+  );
+
+  // Abre edição preenchendo os dados do usuário autenticado
+  function handleAbrirEdicao() {
+    if (usuarioLogado) {
+      setNome(usuarioLogado.nome || '');
+      setEmail(usuarioLogado.email || '');
+      setEndereco(usuarioLogado.endereco || '');
+      setNumero(usuarioLogado.numero || '');
+      setComplemento(usuarioLogado.complemento || '');
+      setEstado(usuarioLogado.estado || '');
+      setCidade(usuarioLogado.cidade || '');
+      setSenha(usuarioLogado.senha || '');
+      setRepitaSenha(usuarioLogado.senha || '');
+      setReceberNotificacoes(Boolean(usuarioLogado.receberNotificacoes));
+    }
+    setTipoTela('cadastro');
   }
 
-  function handleLogin() {
-    setCarregando(true);
-    setTimeout(() => {
-      setCarregando(false);
-      setTipoTela('perfil'); // Vai para o perfil após logar
-    }, 1500);
+  // Abre tela de cadastro limpando todos os campos
+  function handleAbrirNovoCadastro() {
+    setNome('');
+    setEmail('');
+    setEndereco('');
+    setNumero('');
+    setComplemento('');
+    setEstado('');
+    setCidade('');
+    setSenha('');
+    setRepitaSenha('');
+    setReceberNotificacoes(false);
+    setTipoTela('cadastro');
   }
 
-  // --- TELA 1: CADASTRAR PERFIL ---
+  // Cadastrar nova conta
+  async function handleSalvarPerfil() {
+    if (!nome.trim() || !email.trim() || !senha.trim()) {
+      Alert.alert('Atenção', 'Preencha ao menos Nome, E-mail e Senha.');
+      return;
+    }
+
+    if (senha !== repitaSenha) {
+      Alert.alert('Erro', 'As senhas digitadas não coincidem.');
+      return;
+    }
+
+    try {
+      setCarregando(true);
+      await eventoDb.cadastrarUsuario({
+        nome: nome.trim(),
+        email: email.trim().toLowerCase(),
+        endereco: endereco.trim(),
+        numero: numero.trim(),
+        complemento: complemento.trim(),
+        estado: estado.trim().toUpperCase(),
+        cidade: cidade.trim(),
+        senha,
+        receberNotificacoes: receberNotificacoes ? 1 : 0,
+      });
+
+      await carregarDadosPerfil();
+      Alert.alert('Sucesso', 'Conta criada com sucesso!');
+      setTipoTela('perfil');
+    } catch (erro) {
+      Alert.alert('Erro', 'Não foi possível cadastrar a conta. Verifique se o e-mail já existe.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  // Efetuar login e vincular sessão ativa
+  async function handleLogin() {
+    if (!loginInput.trim() || !loginSenha.trim()) {
+      Alert.alert('Atenção', 'Informe usuário/email e senha.');
+      return;
+    }
+
+    try {
+      setCarregando(true);
+      const usuario = await eventoDb.autenticarUsuario(loginInput.trim(), loginSenha.trim());
+
+      if (!usuario) {
+        Alert.alert('Atenção', 'Credenciais inválidas. Verifique seu login e senha.');
+        return;
+      }
+
+      setUsuarioLogado(usuario);
+      const dadosMetricas = await eventoDb.obterMetricasUsuario();
+      setMetricas(dadosMetricas);
+      setLoginInput('');
+      setLoginSenha('');
+      setTipoTela('perfil');
+    } catch (erro) {
+      Alert.alert('Erro', 'Erro ao realizar login.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  // Logout real: limpa a sessão no SQLite e volta para login
+  async function handleLogout() {
+    try {
+      await eventoDb.encerrarSessao();
+      setUsuarioLogado(null);
+      setLoginInput('');
+      setLoginSenha('');
+      setMetricas({ totalCriados: 0, totalSalvos: 0 });
+      setTipoTela('login');
+    } catch (erro) {
+      console.error('Erro ao realizar logout:', erro);
+    }
+  }
+
+  // --- TELA 1: CADASTRAR / ALTERAR PERFIL ---
   if (tipoTela === 'cadastro') {
     return (
       <View style={globalStyles.container}>
         <Header />
-        <ScrollView contentContainerStyle={localStyles.scroll}>
-          <View style={localStyles.badgeTitulo}>
-            <Text style={localStyles.textoBadgeTitulo}>Cadastrar perfil</Text>
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <View style={styles.badgeTitulo}>
+            <Text style={styles.textoBadgeTitulo}>
+              {usuarioLogado ? 'Alterar dados' : 'Cadastrar perfil'}
+            </Text>
           </View>
 
-          <Text style={localStyles.rotulo}>Nome Completo</Text>
-          <TextInput style={localStyles.input} placeholder="Preencher com nome completo..." placeholderTextColor={colors.gray[600]} value={nome} onChangeText={setNome} />
+          <Text style={styles.rotulo}>Nome Completo</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Preencher com nome completo..."
+            placeholderTextColor={colors.gray[600]}
+            value={nome}
+            onChangeText={setNome}
+          />
 
-          <Text style={localStyles.rotulo}>E-mail</Text>
-          <TextInput style={localStyles.input} placeholder="Use seu melhor e-mail..." placeholderTextColor={colors.gray[600]} value={email} onChangeText={setEmail} keyboardType="email-address" />
+          <Text style={styles.rotulo}>E-mail</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Use seu melhor e-mail..."
+            placeholderTextColor={colors.gray[600]}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-          <Text style={localStyles.rotulo}>Endereço</Text>
-          <TextInput style={localStyles.input} placeholder="Rua, avenida, etc..." placeholderTextColor={colors.gray[600]} value={endereco} onChangeText={setEndereco} />
+          <Text style={styles.rotulo}>Endereço</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Rua, avenida, etc..."
+            placeholderTextColor={colors.gray[600]}
+            value={endereco}
+            onChangeText={setEndereco}
+          />
 
-          <View style={localStyles.linhaDupla}>
+          <View style={styles.linhaDupla}>
             <View style={{ flex: 1 }}>
-              <Text style={localStyles.rotulo}>Número</Text>
-              <TextInput style={localStyles.input} placeholder="123..." placeholderTextColor={colors.gray[600]} value={numero} onChangeText={setNumero} />
+              <Text style={styles.rotulo}>Número</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="123..."
+                placeholderTextColor={colors.gray[600]}
+                value={numero}
+                onChangeText={setNumero}
+              />
             </View>
             <View style={{ flex: 1.5 }}>
-              <Text style={localStyles.rotulo}>Complemento</Text>
-              <TextInput style={localStyles.input} placeholder="Casa, Apto..." placeholderTextColor={colors.gray[600]} value={complemento} onChangeText={setComplemento} />
+              <Text style={styles.rotulo}>Complemento</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Casa, Apto..."
+                placeholderTextColor={colors.gray[600]}
+                value={complemento}
+                onChangeText={setComplemento}
+              />
             </View>
           </View>
 
-          <View style={localStyles.linhaDupla}>
+          <View style={styles.linhaDupla}>
             <View style={{ flex: 1 }}>
-              <Text style={localStyles.rotulo}>Estado</Text>
-              <TextInput style={localStyles.input} placeholder="Selecione..." placeholderTextColor={colors.gray[600]} value={estado} onChangeText={setEstado} />
+              <Text style={styles.rotulo}>Estado</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="SP..."
+                placeholderTextColor={colors.gray[600]}
+                value={estado}
+                onChangeText={setEstado}
+                maxLength={2}
+                autoCapitalize="characters"
+              />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={localStyles.rotulo}>Cidade</Text>
-              <TextInput style={localStyles.input} placeholder="Selecione..." placeholderTextColor={colors.gray[600]} value={cidade} onChangeText={setCidade} />
+              <Text style={styles.rotulo}>Cidade</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Americana..."
+                placeholderTextColor={colors.gray[600]}
+                value={cidade}
+                onChangeText={setCidade}
+              />
             </View>
           </View>
 
-          <Text style={localStyles.rotulo}>Senha (8 caracteres)</Text>
-          <TextInput style={localStyles.input} placeholder="********" placeholderTextColor={colors.gray[600]} secureTextEntry value={senha} onChangeText={setSenha} />
+          <Text style={styles.rotulo}>Senha (8 caracteres)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="********"
+            placeholderTextColor={colors.gray[600]}
+            secureTextEntry
+            value={senha}
+            onChangeText={setSenha}
+          />
 
-          <Text style={localStyles.rotulo}>Repita a senha</Text>
-          <TextInput style={localStyles.input} placeholder="********" placeholderTextColor={colors.gray[600]} secureTextEntry value={repitaSenha} onChangeText={setRepitaSenha} />
+          <Text style={styles.rotulo}>Repita a senha</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="********"
+            placeholderTextColor={colors.gray[600]}
+            secureTextEntry
+            value={repitaSenha}
+            onChangeText={setRepitaSenha}
+          />
 
-          <TouchableOpacity style={localStyles.checkboxContainer} onPress={() => setReceberNotificacoes(!receberNotificacoes)}>
-            <View style={[localStyles.checkbox, receberNotificacoes && localStyles.checkboxAtivo]} />
-            <Text style={localStyles.textoCheckbox}>Desejo receber notificações do Eventuca?</Text>
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            activeOpacity={0.8}
+            onPress={() => setReceberNotificacoes(!receberNotificacoes)}
+          >
+            <View style={[styles.checkbox, receberNotificacoes && styles.checkboxAtivo]} />
+            <Text style={styles.textoCheckbox}>Desejo receber notificações do Eventuca?</Text>
           </TouchableOpacity>
 
           <View style={{ marginTop: 16 }}>
             <Botao titulo="Salvar Perfil" isLoading={carregando} onPress={handleSalvarPerfil} />
           </View>
 
-          <TouchableOpacity onPress={() => setTipoTela('login')} style={{ marginTop: 16, alignItems: 'center' }}>
-            <Text style={{ color: colors.orange[500], fontSize: 12 }}>Já tem uma conta? Faça login</Text>
+          <TouchableOpacity
+            onPress={() => setTipoTela(usuarioLogado ? 'perfil' : 'login')}
+            style={{ marginTop: 16, alignItems: 'center' }}
+          >
+            <Text style={{ color: colors.orange[500], fontSize: 12 }}>
+              {usuarioLogado ? 'Cancelar e voltar ao perfil' : 'Já tem uma conta? Faça login'}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -113,27 +315,42 @@ export default function TelaPerfil() {
     return (
       <View style={globalStyles.container}>
         <Header />
-        <ScrollView contentContainerStyle={localStyles.scroll}>
-          <View style={localStyles.badgeTitulo}>
-            <Text style={localStyles.textoBadgeTitulo}>Fazer Login</Text>
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <View style={styles.badgeTitulo}>
+            <Text style={styles.textoBadgeTitulo}>Fazer Login</Text>
           </View>
 
-          <Text style={localStyles.rotulo}>Login</Text>
-          <TextInput style={localStyles.input} placeholder="Preencher com nome completo ou email..." placeholderTextColor={colors.gray[600]} value={loginInput} onChangeText={setLoginInput} />
+          <Text style={styles.rotulo}>Login</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Preencher com nome completo ou email..."
+            placeholderTextColor={colors.gray[600]}
+            value={loginInput}
+            onChangeText={setLoginInput}
+            autoCapitalize="none"
+          />
 
-          <Text style={localStyles.rotulo}>Senha (8 caracteres)</Text>
-          <TextInput style={localStyles.input} placeholder="********" placeholderTextColor={colors.gray[600]} secureTextEntry value={loginSenha} onChangeText={setLoginSenha} />
+          <Text style={styles.rotulo}>Senha (8 caracteres)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="********"
+            placeholderTextColor={colors.gray[600]}
+            secureTextEntry
+            value={loginSenha}
+            onChangeText={setLoginSenha}
+          />
 
           <View style={{ marginTop: 16 }}>
             <Botao titulo="Login" isLoading={carregando} onPress={handleLogin} />
           </View>
 
-          <TouchableOpacity style={{ alignItems: 'center', marginTop: 16 }}>
-            <Text style={{ color: colors.orange[400], fontSize: 12, marginBottom: 8 }}>Esqueci minha senha</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => setTipoTela('cadastro')} style={{ alignItems: 'center' }}>
-            <Text style={{ color: colors.orange[400], fontSize: 12 }}>Não tenho senha, quero cadastrar</Text>
+          <TouchableOpacity
+            onPress={handleAbrirNovoCadastro}
+            style={{ alignItems: 'center', marginTop: 16 }}
+          >
+            <Text style={{ color: colors.orange[400], fontSize: 12 }}>
+              Não tenho conta, quero cadastrar
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -141,186 +358,78 @@ export default function TelaPerfil() {
   }
 
   // --- TELA 3: PERFIL LOGADO ---
+  const primeiroNome = usuarioLogado?.nome ? usuarioLogado.nome.trim().split(' ')[0] : 'Usuário';
+  const emailFormatado = usuarioLogado?.email || 'Não informado';
+  const enderecoFormatado = usuarioLogado?.endereco
+    ? `${usuarioLogado.endereco}, ${usuarioLogado.numero || 'S/N'}${usuarioLogado.complemento ? ` - ${usuarioLogado.complemento}` : ''} - ${usuarioLogado.cidade || ''}/${usuarioLogado.estado || ''}`
+    : 'Endereço não informado';
+
   return (
     <View style={globalStyles.container}>
       <Header />
-      <ScrollView contentContainerStyle={localStyles.scroll}>
-        <Text style={[globalStyles.textoTitulo, { fontSize: 22, marginBottom: 20 }]}>Olá, Fulano!</Text>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <Text style={[globalStyles.textoTitulo, { fontSize: 22, marginBottom: 20 }]}>
+          Olá, {primeiroNome}!
+        </Text>
 
-        {/* Card Seus Dados */}
-        <View style={localStyles.cardPerfil}>
+        <View style={styles.cardPerfil}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
             <Ionicons name="clipboard-outline" size={16} color={colors.white} />
             <Text style={{ color: colors.white, fontWeight: 'bold', fontSize: 14 }}>Seus dados</Text>
           </View>
 
-          <Text style={localStyles.textoDado}>
-            <Text style={{ fontWeight: 'bold' }}>Email:</Text> fulano@email.com
+          <Text style={styles.textoDado}>
+            <Text style={{ fontWeight: 'bold' }}>Email: </Text>
+            {emailFormatado}
           </Text>
-          <Text style={localStyles.textoDado}>
-            <Text style={{ fontWeight: 'bold' }}>Endereço:</Text> Rua andorinhas, 500 - JD America - Americana/SP
+          <Text style={styles.textoDado}>
+            <Text style={{ fontWeight: 'bold' }}>Endereço: </Text>
+            {enderecoFormatado}
           </Text>
 
-          <TouchableOpacity onPress={() => setTipoTela('cadastro')} style={{ alignSelf: 'flex-end', marginTop: 8 }}>
+          <TouchableOpacity
+            onPress={handleAbrirEdicao}
+            style={{ alignSelf: 'flex-end', marginTop: 8 }}
+          >
             <Text style={{ color: colors.orange[400], fontSize: 11 }}>Alterar Dados</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Linha Eventos Criados */}
-        <TouchableOpacity style={localStyles.linhaOpcaoPerfil} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.linhaOpcaoPerfil}
+          activeOpacity={0.7}
+          onPress={() => router.push('/adicionar-evento' as any)}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ionicons name="clipboard-outline" size={16} color={colors.white} />
-            <Text style={localStyles.textoOpcaoPerfil}>Eventos criados</Text>
+            <Text style={styles.textoOpcaoPerfil}>Eventos criados</Text>
           </View>
-          <View style={localStyles.badgeContador}>
-            <Text style={localStyles.textoContador}>2</Text>
+          <View style={styles.badgeContador}>
+            <Text style={styles.textoContador}>{metricas.totalCriados}</Text>
           </View>
         </TouchableOpacity>
 
-        {/* Linha Meus Eventos Salvos */}
-        <TouchableOpacity style={localStyles.linhaOpcaoPerfil} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.linhaOpcaoPerfil}
+          activeOpacity={0.7}
+          onPress={() => router.push('/salvos' as any)}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ionicons name="clipboard-outline" size={16} color={colors.white} />
-            <Text style={localStyles.textoOpcaoPerfil}>Meus eventos salvos</Text>
+            <Text style={styles.textoOpcaoPerfil}>Meus eventos salvos</Text>
           </View>
-          <View style={localStyles.badgeContador}>
-            <Text style={localStyles.textoContador}>9</Text>
+          <View style={styles.badgeContador}>
+            <Text style={styles.textoContador}>{metricas.totalSalvos}</Text>
           </View>
         </TouchableOpacity>
 
-        {/* Botão Logout */}
         <View style={{ marginTop: 32 }}>
-          <TouchableOpacity style={localStyles.botaoLogout} onPress={() => setTipoTela('login')} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.botaoLogout} onPress={handleLogout} activeOpacity={0.8}>
             <Ionicons name="log-out-outline" size={16} color={colors.white} />
-            <Text style={localStyles.textoLogout}>LogOut</Text>
+            <Text style={styles.textoLogout}>LogOut</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
   );
 }
-
-// Estilos específicos integrados para corresponder perfeitamente às imagens
-import { StyleSheet } from 'react-native';
-
-const localStyles = StyleSheet.create({
-  scroll: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-    paddingTop: 12,
-  },
-  badgeTitulo: {
-    borderWidth: 1,
-    borderColor: colors.orange[500],
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 20,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  textoBadgeTitulo: {
-    color: colors.orange[500],
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  rotulo: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  input: {
-    backgroundColor: colors.gray[900],
-    borderWidth: 1,
-    borderColor: colors.orange[500],
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: colors.white,
-    fontSize: 12,
-  },
-  linhaDupla: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 14,
-  },
-  checkbox: {
-    width: 14,
-    height: 14,
-    borderWidth: 1,
-    borderColor: colors.orange[500],
-    borderRadius: 2,
-  },
-  checkboxAtivo: {
-    backgroundColor: colors.orange[500],
-  },
-  textoCheckbox: {
-    color: colors.white,
-    fontSize: 11,
-  },
-  cardPerfil: {
-    backgroundColor: colors.gray[900],
-    borderWidth: 1,
-    borderColor: colors.gray[800],
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 12,
-  },
-  textoDado: {
-    color: colors.gray[300],
-    fontSize: 12,
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  linhaOpcaoPerfil: {
-    backgroundColor: colors.gray[900],
-    borderWidth: 1,
-    borderColor: colors.gray[800],
-    borderRadius: 8,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  textoOpcaoPerfil: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  badgeContador: {
-    backgroundColor: colors.red[600],
-    borderRadius: 12,
-    width: 22,
-    height: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  textoContador: {
-    color: colors.white,
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  botaoLogout: {
-    backgroundColor: colors.orange[600],
-    borderRadius: 6,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    alignSelf: 'center',
-    width: 140,
-  },
-  textoLogout: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-});

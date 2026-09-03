@@ -174,6 +174,7 @@ export default function TelaAdicionarEvento() {
         instagram,
         linkedin,
         imagemUri: imagemUri || '', // Se vazio, a tela de detalhes usará o BannerPadrao
+        //usuario_id: 1, // ID do usuário logado (exemplo)
       });
 
       limparFormulario();

@@ -1,9 +1,15 @@
 import { type SQLiteDatabase } from 'expo-sqlite';
 
 export async function iniciarBancoDados(database: SQLiteDatabase) {
-  // 1. Criação das tabelas
   await database.execAsync(`
     PRAGMA journal_mode = WAL;
+
+    -- para limpar o banco de dados, descomente as linhas abaixo e execute o app
+    -- DROP TABLE IF EXISTS usuarios;
+    -- DROP TABLE IF EXISTS sessao;
+    -- DROP TABLE IF EXISTS favoritos;
+    -- DROP TABLE IF EXISTS eventos;
+
 
     CREATE TABLE IF NOT EXISTS usuarios (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,7 +21,7 @@ export async function iniciarBancoDados(database: SQLiteDatabase) {
       estado TEXT,
       cidade TEXT,
       senha TEXT NOT NULL,
-      notificacoes INTEGER DEFAULT 0
+      receberNotificacoes INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS eventos (
@@ -40,12 +46,19 @@ export async function iniciarBancoDados(database: SQLiteDatabase) {
 
     CREATE TABLE IF NOT EXISTS favoritos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      usuario_id INTEGER,
+      usuario_id INTEGER NOT NULL,
       evento_id INTEGER NOT NULL,
       FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
       FOREIGN KEY (evento_id) REFERENCES eventos(id)
     );
+
+    CREATE TABLE IF NOT EXISTS sessao (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      usuario_id INTEGER,
+      FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    );
   `);
+}
 
   // 2. Rotina de Seed (Popula se a tabela estiver vazia)
   // const total = await database.getFirstAsync<{ total: number }>(
@@ -121,4 +134,4 @@ export async function iniciarBancoDados(database: SQLiteDatabase) {
   //     await statement.finalizeAsync();
   //   }
   // }
-}
+//}
