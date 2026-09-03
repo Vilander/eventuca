@@ -23,7 +23,6 @@ import { styles } from './styles';
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.44 + 12;
 
-//const CATEGORIAS = ['Todos', 'Meetup', 'Conferência', 'Hackathon', 'Bootcamp', 'Webinar', 'Fórum'];
 const MESES_NOMES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
 export default function TelaInicio() {
@@ -56,7 +55,7 @@ export default function TelaInicio() {
     }, [])
   );
 
-  // Gera os próximos 12 meses a partir da data atual (oculta os meses passados)
+  // Gera os próximos 12 meses a partir da data atual
   const listaProximosMeses = useMemo<MesItem[]>(() => {
     const agora = new Date();
     const resultado: MesItem[] = [];
@@ -65,9 +64,8 @@ export default function TelaInicio() {
       const dataRef = new Date(agora.getFullYear(), agora.getMonth() + i, 1);
       const mesNome = MESES_NOMES[dataRef.getMonth()];
       const ano = dataRef.getFullYear();
-      const chave = `${mesNome} ${ano}`; // Ex: "ago 2026"
+      const chave = `${mesNome} ${ano}`;
 
-      // Verifica se existe algum evento com esse mês/ano na string de data
       const temEvento = eventos.some((evt) =>
         evt.data.toLowerCase().includes(mesNome) && evt.data.includes(String(ano))
       );
@@ -83,19 +81,27 @@ export default function TelaInicio() {
     return resultado;
   }, [eventos]);
 
-  // Alterna a seleção de mês (se clicar no mesmo, desmarca)
   function handleSelecionarMes(chave: string) {
     setMesSelecionado((atual) => (atual === chave ? null : chave));
     setPaginaAtiva(0);
     scrollRef.current?.scrollTo({ x: 0, animated: true });
   }
 
+  function handleMudarBusca(texto: string) {
+    setBusca(texto);
+    setPaginaAtiva(0);
+    scrollRef.current?.scrollTo({ x: 0, animated: false });
+  }
+
   // 1. Filtragem dos Cards Principais (Busca + Mês Selecionado)
   const eventosPrincipaisFiltrados = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+
     return eventos.filter((item) => {
       const matchBusca =
-        item.titulo.toLowerCase().includes(busca.toLowerCase()) ||
-        (item.descricao && item.descricao.toLowerCase().includes(busca.toLowerCase()));
+        !termo ||
+        item.titulo.toLowerCase().includes(termo) ||
+        (item.descricao && item.descricao.toLowerCase().includes(termo));
 
       if (!mesSelecionado) return matchBusca;
 
@@ -110,20 +116,16 @@ export default function TelaInicio() {
   // 2. Filtragem dos Cards de Recomendação (Busca + Categoria)
   const eventosRecomendadosFiltrados = useMemo(() => {
     return eventos.filter((item) => {
-      const matchBusca =
-        item.titulo.toLowerCase().includes(busca.toLowerCase()) ||
-        (item.descricao && item.descricao.toLowerCase().includes(busca.toLowerCase()));
-
-      if (categoriaSelecionada === 'Todos') return matchBusca;
+      if (categoriaSelecionada === 'Todos') return true;
 
       try {
         const tags: string[] = JSON.parse(item.categorias);
-        return matchBusca && tags.includes(categoriaSelecionada);
+        return tags.includes(categoriaSelecionada);
       } catch {
-        return matchBusca && item.categorias.includes(categoriaSelecionada);
+        return item.categorias.includes(categoriaSelecionada);
       }
     });
-  }, [eventos, busca, categoriaSelecionada]);
+  }, [eventos, categoriaSelecionada]);;
 
   const handleScroll = (event: any) => {
     if (isAutoScrolling.current) return;
@@ -162,13 +164,18 @@ export default function TelaInicio() {
         {/* Campo de Busca */}
         <View style={styles.containerBusca}>
           <TextInput
-            style={styles.inputBusca}
+            style={[styles.inputBusca, { color: colors.white }]}
             placeholder="Pesquisar evento..."
             placeholderTextColor={colors.gray[500]}
             value={busca}
-            onChangeText={setBusca}
+            onChangeText={handleMudarBusca}
+            autoCorrect={false}
+            autoCapitalize="none"
+            clearButtonMode="while-editing"
           />
-          <Ionicons name="search" size={20} color={colors.gray[400]} style={styles.iconeBusca} />
+          <View pointerEvents="none" style={styles.iconeBusca}>
+            <Ionicons name="search" size={20} color={colors.gray[400]} />
+          </View>
         </View>
 
         {/* Filtro Dinâmico de Meses */}
