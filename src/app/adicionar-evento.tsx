@@ -52,25 +52,24 @@ export default function TelaAdicionarEvento() {
   const [carregando, setCarregando] = useState(false);
 
   // Selecionar imagem da galeria
-  async function handleSelecionarImagem() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+async function handleSelecionarImagem() {
+  const resultado = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [16, 9],
+    quality: 0.5, // Reduz o tamanho da string Base64
+    base64: true, // Gera a string Base64 automaticamente
+  });
+
+  if (!resultado.canceled && resultado.assets[0]) {
+    const asset = resultado.assets[0];
+    // Cria o formato aceito nativamente pela tag <Image />
+    const formatoMime = asset.mimeType || 'image/jpeg';
+    const imagemBase64 = `data:${formatoMime};base64,${asset.base64}`;
     
-    if (status !== 'granted') {
-      Alert.alert('Permissão necessária', 'Precisamos de acesso à sua galeria para adicionar fotos aos eventos.');
-      return;
-    }
-
-    const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 0.8,
-    });
-
-    if (!resultado.canceled && resultado.assets[0]?.uri) {
-      setImagemUri(resultado.assets[0].uri);
-    }
+    setImagemUri(imagemBase64);
   }
+}
 
   // Função para resetar todos os campos do formulário
   const limparFormulario = useCallback(() => {

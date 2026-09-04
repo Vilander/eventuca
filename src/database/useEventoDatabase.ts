@@ -1,4 +1,5 @@
-import { useSQLiteContext } from 'expo-sqlite';
+import { sessaoStorage } from './sessaoStorage';
+import { turso } from './tursoCliente';
 
 // ================= TIPOS DE EVENTOS =================
 export type EventoRegistro = {
@@ -64,30 +65,18 @@ function converterDataString(dataStr: string): Date | null {
 
 // ================= HOOK DO BANCO =================
 export function useEventoDatabase() {
-  const database = useSQLiteContext();
-
-  // --- GERENCIAMENTO DE SESSÃO ATIVA ---
+  // --- GERENCIAMENTO DE SESSÃO LOCAL (ASYNCSTORAGE) ---
 
   async function iniciarSessao(usuarioId: number) {
-    await database.runAsync(
-      'INSERT OR REPLACE INTO sessao (id, usuario_id) VALUES (1, ?)',
-      [usuarioId]
-    );
+    await sessaoStorage.salvarUsuarioId(usuarioId);
   }
 
   async function encerrarSessao() {
-    await database.runAsync('DELETE FROM sessao WHERE id = 1');
+    await sessaoStorage.removerSessao();
   }
 
   async function obterSessaoAtiva(): Promise<number | null> {
-    try {
-      const registro = await database.getFirstAsync<{ usuario_id: number }>(
-        'SELECT usuario_id FROM sessao WHERE id = 1'
-      );
-      return registro?.usuario_id ?? null;
-    } catch {
-      return null;
-    }
+    return await sessaoStorage.obterUsuarioId();
   }
 
   async function obterUsuarioLogado(): Promise<UsuarioRegistro | null> {
@@ -96,72 +85,70 @@ export function useEventoDatabase() {
     return await buscarUsuarioPorId(usuarioId);
   }
 
-  // --- OPERAÇÕES DE EVENTOS ---
+  // --- OPERAÇÕES DE EVENTOS (TURSO) ---
 
   async function criarEvento(evento: EventoCriacao) {
-    // Se nenhum usuario_id foi passado manualmente, usa a sessão ativa
     const usuarioIdFinal = evento.usuario_id ?? (await obterSessaoAtiva());
 
-    const statement = await database.prepareAsync(`
-      INSERT INTO eventos (
-        titulo, descricao, data, categorias, presencial, online,
-        certificado, gratuito, preco, linkOficial, facebook, instagram,
-        linkedin, imagemUri, usuario_id
-      ) VALUES ($titulo, $descricao, $data, $categorias, $presencial, $online,
-        $certificado, $gratuito, $preco, $linkOficial, $facebook, $instagram,
-        $linkedin, $imagemUri, $usuario_id)
-    `);
+    const resultado = await turso.execute({
+      sql: `
+        INSERT INTO eventos (
+          titulo, descricao, data, categorias, presencial, online,
+          certificado, gratuito, preco, linkOficial, facebook, instagram,
+          linkedin, imagemUri, usuario_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        RETURNING id
+      `,
+      args: [
+        evento.titulo,
+        evento.descricao ?? '',
+        evento.data,
+        evento.categorias,
+        evento.presencial,
+        evento.online,
+        evento.certificado,
+        evento.gratuito,
+        evento.preco ?? '',
+        evento.linkOficial ?? '',
+        evento.facebook ?? '',
+        evento.instagram ?? '',
+        evento.linkedin ?? '',
+        evento.imagemUri ?? '',
+        usuarioIdFinal,
+      ],
+    });
 
-    try {
-      const resultado = await statement.executeAsync({
-        $titulo: evento.titulo,
-        $descricao: evento.descricao ?? '',
-        $data: evento.data,
-        $categorias: evento.categorias,
-        $presencial: evento.presencial,
-        $online: evento.online,
-        $certificado: evento.certificado,
-        $gratuito: evento.gratuito,
-        $preco: evento.preco ?? '',
-        $linkOficial: evento.linkOficial ?? '',
-        $facebook: evento.facebook ?? '',
-        $instagram: evento.instagram ?? '',
-        $linkedin: evento.linkedin ?? '',
-        $imagemUri: evento.imagemUri ?? '',
-        $usuario_id: usuarioIdFinal,
-      });
-
-      return { inseridoId: resultado.lastInsertRowId };
-    } finally {
-      await statement.finalizeAsync();
-    }
+    const inseridoId = Number(resultado.rows[0]?.id ?? resultado.lastInsertRowid);
+    return { inseridoId };
   }
 
-  async function listarTodos() {
-    return await database.getAllAsync<EventoRegistro>(
-      'SELECT * FROM eventos ORDER BY id DESC'
-    );
+  async function listarTodos(): Promise<EventoRegistro[]> {
+    const resultado = await turso.execute('SELECT * FROM eventos ORDER BY id DESC');
+    return resultado.rows as unknown as EventoRegistro[];
   }
 
-  async function buscarPorId(id: number) {
-    return await database.getFirstAsync<EventoRegistro>(
-      'SELECT * FROM eventos WHERE id = ?',
-      [id]
-    );
+  async function buscarPorId(id: number): Promise<EventoRegistro | null> {
+    const resultado = await turso.execute({
+      sql: 'SELECT * FROM eventos WHERE id = ?',
+      args: [id],
+    });
+
+    if (resultado.rows.length === 0) return null;
+    return resultado.rows[0] as unknown as EventoRegistro;
   }
 
-  // --- OPERAÇÕES DE FAVORITOS MULTIUSUÁRIO ---
+  // --- OPERAÇÕES DE FAVORITOS MULTIUSUÁRIO (TURSO) ---
 
   async function isFavorito(eventoId: number): Promise<boolean> {
     const usuarioId = await obterSessaoAtiva();
     if (!usuarioId) return false;
 
     try {
-      const registro = await database.getFirstAsync<{ id: number }>(
-        'SELECT id FROM favoritos WHERE evento_id = ? AND usuario_id = ?',
-        [eventoId, usuarioId]
-      );
-      return !!registro;
+      const resultado = await turso.execute({
+        sql: 'SELECT id FROM favoritos WHERE evento_id = ? AND usuario_id = ?',
+        args: [eventoId, usuarioId],
+      });
+      return resultado.rows.length > 0;
     } catch {
       return false;
     }
@@ -176,16 +163,16 @@ export function useEventoDatabase() {
     const jaFavorito = await isFavorito(eventoId);
 
     if (jaFavorito) {
-      await database.runAsync(
-        'DELETE FROM favoritos WHERE evento_id = ? AND usuario_id = ?',
-        [eventoId, usuarioId]
-      );
+      await turso.execute({
+        sql: 'DELETE FROM favoritos WHERE evento_id = ? AND usuario_id = ?',
+        args: [eventoId, usuarioId],
+      });
       return false;
     } else {
-      await database.runAsync(
-        'INSERT INTO favoritos (evento_id, usuario_id) VALUES (?, ?)',
-        [eventoId, usuarioId]
-      );
+      await turso.execute({
+        sql: 'INSERT INTO favoritos (evento_id, usuario_id) VALUES (?, ?)',
+        args: [eventoId, usuarioId],
+      });
       return true;
     }
   }
@@ -202,52 +189,45 @@ export function useEventoDatabase() {
         WHERE f.usuario_id = ?
         ORDER BY f.id DESC
       `;
-      return await database.getAllAsync<EventoRegistro>(consulta, [usuarioId]);
+      const resultado = await turso.execute({
+        sql: consulta,
+        args: [usuarioId],
+      });
+      return resultado.rows as unknown as EventoRegistro[];
     } catch {
       return [];
     }
   }
 
-  // --- OPERAÇÕES DE USUÁRIO E AUTENTICAÇÃO ---
+  // --- OPERAÇÕES DE USUÁRIO E AUTENTICAÇÃO (TURSO) ---
 
-async function cadastrarUsuario(usuario: UsuarioCriacao) {
+  async function cadastrarUsuario(usuario: UsuarioCriacao) {
     try {
-      // Garante que a tabela sessao existe caso o banco seja antigo
-      await database.execAsync(`
-        CREATE TABLE IF NOT EXISTS sessao (
-          id INTEGER PRIMARY KEY CHECK (id = 1),
-          usuario_id INTEGER,
-          FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-        );
-      `);
+      const resultado = await turso.execute({
+        sql: `
+          INSERT INTO usuarios (
+            nome, email, endereco, numero, complemento, estado, cidade, senha, receberNotificacoes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          RETURNING id
+        `,
+        args: [
+          usuario.nome,
+          usuario.email,
+          usuario.endereco ?? '',
+          usuario.numero ?? '',
+          usuario.complemento ?? '',
+          usuario.estado ?? '',
+          usuario.cidade ?? '',
+          usuario.senha ?? '',
+          usuario.receberNotificacoes ?? 0,
+        ],
+      });
 
-      const statement = await database.prepareAsync(`
-        INSERT INTO usuarios (
-          nome, email, endereco, numero, complemento, estado, cidade, senha, receberNotificacoes
-        ) VALUES ($nome, $email, $endereco, $numero, $complemento, $estado, $cidade, $senha, $receberNotificacoes)
-      `);
-
-      try {
-        const resultado = await statement.executeAsync({
-          $nome: usuario.nome,
-          $email: usuario.email,
-          $endereco: usuario.endereco ?? '',
-          $numero: usuario.numero ?? '',
-          $complemento: usuario.complemento ?? '',
-          $estado: usuario.estado ?? '',
-          $cidade: usuario.cidade ?? '',
-          $senha: usuario.senha ?? '',
-          $receberNotificacoes: usuario.receberNotificacoes ?? 0,
-        });
-
-        const novoId = Number(resultado.lastInsertRowId);
-        await iniciarSessao(novoId);
-        return { inseridoId: novoId };
-      } finally {
-        await statement.finalizeAsync();
-      }
+      const novoId = Number(resultado.rows[0]?.id ?? resultado.lastInsertRowid);
+      await iniciarSessao(novoId);
+      return { inseridoId: novoId };
     } catch (erro) {
-      console.error('ERRO DETALHADO NO CADASTRO SQLite:', erro);
+      console.error('ERRO DETALHADO NO CADASTRO TURSO:', erro);
       throw erro;
     }
   }
@@ -257,24 +237,26 @@ async function cadastrarUsuario(usuario: UsuarioCriacao) {
       SELECT * FROM usuarios 
       WHERE (email = ? OR nome = ?) AND senha = ?
     `;
-    const usuario = await database.getFirstAsync<UsuarioRegistro>(consulta, [
-      loginIdentificador,
-      loginIdentificador,
-      senhaDigitada,
-    ]);
+    const resultado = await turso.execute({
+      sql: consulta,
+      args: [loginIdentificador, loginIdentificador, senhaDigitada],
+    });
 
-    if (usuario) {
-      await iniciarSessao(usuario.id);
-    }
+    if (resultado.rows.length === 0) return null;
 
+    const usuario = resultado.rows[0] as unknown as UsuarioRegistro;
+    await iniciarSessao(usuario.id);
     return usuario;
   }
 
-  async function buscarUsuarioPorId(id: number) {
-    return await database.getFirstAsync<UsuarioRegistro>(
-      'SELECT * FROM usuarios WHERE id = ?',
-      [id]
-    );
+  async function buscarUsuarioPorId(id: number): Promise<UsuarioRegistro | null> {
+    const resultado = await turso.execute({
+      sql: 'SELECT * FROM usuarios WHERE id = ?',
+      args: [id],
+    });
+
+    if (resultado.rows.length === 0) return null;
+    return resultado.rows[0] as unknown as UsuarioRegistro;
   }
 
   async function obterMetricasUsuario() {
@@ -282,10 +264,11 @@ async function cadastrarUsuario(usuario: UsuarioCriacao) {
     if (!usuarioId) return { totalCriados: 0, totalSalvos: 0 };
 
     try {
-      const criados = await database.getFirstAsync<{ total: number }>(
-        'SELECT COUNT(*) as total FROM eventos WHERE usuario_id = ?',
-        [usuarioId]
-      );
+      const resCriados = await turso.execute({
+        sql: 'SELECT COUNT(*) as total FROM eventos WHERE usuario_id = ?',
+        args: [usuarioId],
+      });
+      const totalCriados = Number(resCriados.rows[0]?.total ?? 0);
 
       const consultaSalvos = `
         SELECT e.data
@@ -293,8 +276,12 @@ async function cadastrarUsuario(usuario: UsuarioCriacao) {
         INNER JOIN favoritos f ON f.evento_id = e.id
         WHERE f.usuario_id = ?
       `;
-      const salvos = await database.getAllAsync<{ data: string }>(consultaSalvos, [usuarioId]);
+      const resSalvos = await turso.execute({
+        sql: consultaSalvos,
+        args: [usuarioId],
+      });
 
+      const salvos = resSalvos.rows as unknown as { data: string }[];
       const hoje = new Date();
       const salvosAtivos = salvos.filter((item) => {
         const dataEvento = converterDataString(item.data);
@@ -303,7 +290,7 @@ async function cadastrarUsuario(usuario: UsuarioCriacao) {
       });
 
       return {
-        totalCriados: criados?.total ?? 0,
+        totalCriados,
         totalSalvos: salvosAtivos.length,
       };
     } catch {

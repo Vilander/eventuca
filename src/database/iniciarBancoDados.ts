@@ -1,7 +1,10 @@
-import { type SQLiteDatabase } from 'expo-sqlite';
+// import { type SQLiteDatabase } from 'expo-sqlite';
+import { turso } from './tursoCliente';
 
-export async function iniciarBancoDados(database: SQLiteDatabase) {
-  await database.execAsync(`
+// export async function iniciarBancoDados(database: SQLiteDatabase) { //se usado o SQLite local
+//   await database.execAsync(`
+export async function iniciarBancoDadosTurso() {
+  await turso.executeMultiple(`
     PRAGMA journal_mode = WAL;
 
     -- para limpar o banco de dados, descomente as linhas abaixo e execute o app
