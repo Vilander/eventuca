@@ -5,21 +5,21 @@ import { colors } from '@/styles/colors';
 import { globalStyles } from '@/styles/globalStyles';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, {
-    DateTimePickerAndroid,
-    DateTimePickerEvent,
+  DateTimePickerAndroid,
+  DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-    Alert,
-    Image,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { styles } from '../styles/appStyles';
 
@@ -184,8 +184,16 @@ async function handleSelecionarImagem() {
           onPress: () => router.navigate('/' as any),
         },
       ]);
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível salvar o evento.');
+    } catch (error: any) {
+      const mensagem = error?.message || 'Não foi possível salvar o evento.';
+
+      Alert.alert('Atenção', mensagem, [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Fazer Login',
+          onPress: () => router.push('/perfil' as any),
+        },
+      ]);
     } finally {
       setCarregando(false);
     }
