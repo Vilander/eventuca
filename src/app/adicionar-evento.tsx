@@ -5,23 +5,23 @@ import { colors } from '@/styles/colors';
 import { globalStyles } from '@/styles/globalStyles';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, {
-  DateTimePickerAndroid,
-  DateTimePickerEvent,
+    DateTimePickerAndroid,
+    DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-  Alert,
-  Image,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Image,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { styles } from './styles';
+import { styles } from '../styles/appStyles';
 
 import { CATEGORIAS_EVENTO } from '@/constants/categorias';
 

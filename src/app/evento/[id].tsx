@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { styles } from './styles';
+import { styles } from '../../styles/eventoStyles';
 
 export default function TelaDetalhesEvento() {
   const { id } = useLocalSearchParams<{ id: string }>();

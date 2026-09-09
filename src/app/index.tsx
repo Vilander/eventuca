@@ -18,7 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { styles } from './styles';
+import { styles } from '../styles/appStyles';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.44 + 12;
