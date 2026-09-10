@@ -89,7 +89,9 @@ export function useEventoDatabase() {
 
   async function criarEvento(evento: EventoCriacao) {
     const usuarioIdFinal = evento.usuario_id ?? (await obterSessaoAtiva());
-
+    if (!usuarioIdFinal) {
+      throw new Error('É necessário estar logado para criar um evento.');
+    }
     const resultado = await turso.execute({
       sql: `
         INSERT INTO eventos (

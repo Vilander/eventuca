@@ -164,4 +164,36 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  linhaAcoesAutor: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: 16,
+    paddingTop: 12,
+    //borderTopWidth: 1,
+    //borderTopColor: colors.gray[800],
+  },
+  botaoGestao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  botaoEditar: {
+    backgroundColor: colors.gray[800],
+    borderColor: colors.gray[700],
+  },
+  botaoExcluir: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)', 
+    borderColor: colors.red[500],
+  },
+  textoBotaoGestao: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: '600',
+  },
 });
