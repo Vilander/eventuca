@@ -25,6 +25,8 @@ export default function TelaDetalhesEvento() {
   const [carregando, setCarregando] = useState(true);
   const [favorito, setFavorito] = useState(false);
 
+  const [usuarioLogadoId, setUsuarioLogadoId] = useState<number | null>(null);
+
   // Busca dados do evento e o status de favorito no SQLite
   useFocusEffect(
     useCallback(() => {
@@ -33,12 +35,14 @@ export default function TelaDetalhesEvento() {
         try {
           setCarregando(true);
           const eventoId = Number(id);
-          const [registro, statusFavorito] = await Promise.all([
+          const [registro, statusFavorito, idSessao] = await Promise.all([
             eventoDb.buscarPorId(eventoId),
             eventoDb.isFavorito(eventoId),
+            eventoDb.obterSessaoAtiva(),
           ]);
           setEvento(registro ?? null);
           setFavorito(statusFavorito);
+          setUsuarioLogadoId(idSessao);
         } catch (erro) {
           console.error('Erro ao carregar detalhes do evento:', erro);
         } finally {
@@ -104,6 +108,8 @@ export default function TelaDetalhesEvento() {
   } catch {
     listaCategorias = evento.categorias ? [evento.categorias] : [];
   }
+
+  const ehDonoDoEvento = usuarioLogadoId !== null && usuarioLogadoId === evento.usuario_id;
 
   return (
     <View style={globalStyles.container}>
@@ -234,6 +240,30 @@ export default function TelaDetalhesEvento() {
             </View>
           </View>
         </View>
+        {/* verificando se o usuário logado é o dono do evento para exibir os botões de edição e exclusão */}
+        {ehDonoDoEvento && (
+          <View style={styles.linhaAcoesAutor}>
+            <TouchableOpacity
+              style={[styles.botaoGestao, styles.botaoEditar]}
+              activeOpacity={0.7}
+              onPress={() => console.log('Editar evento:', evento.id)}
+            >
+              <Ionicons name="create-outline" size={16} color={colors.white} />
+              <Text style={styles.textoBotaoGestao}>Editar Evento</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.botaoGestao, styles.botaoExcluir]}
+              activeOpacity={0.7}
+              onPress={() => console.log('Excluir evento:', evento.id)}
+            >
+              <Ionicons name="trash-outline" size={16} color={colors.red[500]} />
+              <Text style={[styles.textoBotaoGestao, { color: colors.red[500] }]}>
+                Excluir Evento
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
