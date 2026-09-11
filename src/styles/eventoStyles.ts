@@ -128,7 +128,7 @@ export const styles = StyleSheet.create({
   },
   textoDescricao: {
     color: colors.gray[300],
-    fontSize: 11,
+    fontSize: 13,
     lineHeight: 16,
     marginTop: 8,
     marginBottom: 20,

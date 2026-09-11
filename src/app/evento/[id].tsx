@@ -8,6 +8,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Linking,
   ScrollView,
@@ -110,6 +111,37 @@ export default function TelaDetalhesEvento() {
   }
 
   const ehDonoDoEvento = usuarioLogadoId !== null && usuarioLogadoId === evento.usuario_id;
+
+  function handleConfirmarExclusao() {
+    if (!evento) return;
+
+    Alert.alert(
+      'Confirmar exclusão',
+      `Tem certeza que deseja excluir o evento "${evento.titulo}"? Esta ação não pode ser desfeita.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setCarregando(true);
+              await eventoDb.excluirEvento(evento.id);
+              Alert.alert('Sucesso', 'Evento excluído com sucesso!', [
+                {
+                  text: 'OK',
+                  onPress: () => router.replace('/'),
+                },
+              ]);
+            } catch (error: any) {
+              Alert.alert('Erro', error?.message || 'Não foi possível excluir o evento.');
+              setCarregando(false);
+            }
+          },
+        },
+      ]
+    );
+  }
 
   return (
     <View style={globalStyles.container}>
@@ -255,7 +287,7 @@ export default function TelaDetalhesEvento() {
             <TouchableOpacity
               style={[styles.botaoGestao, styles.botaoExcluir]}
               activeOpacity={0.7}
-              onPress={() => console.log('Excluir evento:', evento.id)}
+              onPress={handleConfirmarExclusao}
             >
               <Ionicons name="trash-outline" size={16} color={colors.red[500]} />
               <Text style={[styles.textoBotaoGestao, { color: colors.red[500] }]}>

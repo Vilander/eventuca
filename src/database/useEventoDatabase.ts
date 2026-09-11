@@ -300,6 +300,25 @@ export function useEventoDatabase() {
     }
   }
 
+  async function excluirEvento(eventoId: number) {
+    const usuarioId = await obterSessaoAtiva();
+    if (!usuarioId) {
+      throw new Error('Você precisa estar logado para excluir um evento.');
+    }
+
+    await turso.execute({
+      sql: 'DELETE FROM favoritos WHERE evento_id = ?',
+      args: [eventoId],
+    });
+
+    await turso.execute({
+      sql: 'DELETE FROM eventos WHERE id = ? AND usuario_id = ?', 
+      args: [eventoId, usuarioId],
+    });
+
+    return true;
+  }
+
   return {
     iniciarSessao,
     encerrarSessao,
@@ -315,5 +334,6 @@ export function useEventoDatabase() {
     autenticarUsuario,
     buscarUsuarioPorId,
     obterMetricasUsuario,
+    excluirEvento
   };
 }
