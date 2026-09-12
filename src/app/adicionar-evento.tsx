@@ -9,7 +9,7 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
@@ -32,6 +32,9 @@ const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'o
 export default function TelaAdicionarEvento() {
   const eventoDb = useEventoDatabase();
 
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const modoEdicao = Boolean(id);
+
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [imagemUri, setImagemUri] = useState<string | null>(null);
@@ -51,27 +54,23 @@ export default function TelaAdicionarEvento() {
   const [linkedin, setLinkedin] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  // Selecionar imagem da galeria
-async function handleSelecionarImagem() {
-  const resultado = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [16, 9],
-    quality: 0.5, // Reduz o tamanho da string Base64
-    base64: true, // Gera a string Base64 automaticamente
-  });
+  async function handleSelecionarImagem() {
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.5,
+      base64: true,
+    });
 
-  if (!resultado.canceled && resultado.assets[0]) {
-    const asset = resultado.assets[0];
-    // Cria o formato aceito nativamente pela tag <Image />
-    const formatoMime = asset.mimeType || 'image/jpeg';
-    const imagemBase64 = `data:${formatoMime};base64,${asset.base64}`;
-    
-    setImagemUri(imagemBase64);
+    if (!resultado.canceled && resultado.assets[0]) {
+      const asset = resultado.assets[0];
+      const formatoMime = asset.mimeType || 'image/jpeg';
+      const imagemBase64 = `data:${formatoMime};base64,${asset.base64}`;
+      setImagemUri(imagemBase64);
+    }
   }
-}
 
-  // Função para resetar todos os campos do formulário
   const limparFormulario = useCallback(() => {
     setNome('');
     setDescricao('');
@@ -93,10 +92,52 @@ async function handleSelecionarImagem() {
 
   useFocusEffect(
     useCallback(() => {
+      async function carregarDadosEdicao() {
+        if (modoEdicao && id) {
+          try {
+            setCarregando(true);
+            const eventoExistente = await eventoDb.buscarPorId(Number(id));
+            if (eventoExistente) {
+              setNome(eventoExistente.titulo);
+              setDescricao(eventoExistente.descricao || '');
+              setTextoDataFormatada(eventoExistente.data);
+              setImagemUri(eventoExistente.imagemUri || null);
+              setPresencial(Boolean(eventoExistente.presencial));
+              setOnline(Boolean(eventoExistente.online));
+              setCertificado(
+                eventoExistente.certificado !== undefined
+                  ? Boolean(eventoExistente.certificado)
+                  : null
+              );
+              setGratuito(Boolean(eventoExistente.gratuito));
+              setPreco(eventoExistente.preco === 'GRATUITO' ? '' : eventoExistente.preco || '');
+              setSite(eventoExistente.linkOficial || '');
+              setFacebook(eventoExistente.facebook || '');
+              setInstagram(eventoExistente.instagram || '');
+              setLinkedin(eventoExistente.linkedin || '');
+
+              try {
+                setCategoriasSelecionadas(JSON.parse(eventoExistente.categorias));
+              } catch {
+                setCategoriasSelecionadas(
+                  eventoExistente.categorias ? [eventoExistente.categorias] : []
+                );
+              }
+            }
+          } catch (erro) {
+            console.error('Erro ao buscar dados para edição:', erro);
+          } finally {
+            setCarregando(false);
+          }
+        }
+      }
+
+      carregarDadosEdicao();
+
       return () => {
         limparFormulario();
       };
-    }, [limparFormulario])
+    }, [id, modoEdicao, limparFormulario])
   );
 
   function formatarDataTexto(date: Date) {
@@ -158,7 +199,7 @@ async function handleSelecionarImagem() {
     try {
       setCarregando(true);
 
-      await eventoDb.criarEvento({
+      const payload = {
         titulo: nome,
         descricao,
         data: textoDataFormatada,
@@ -172,18 +213,28 @@ async function handleSelecionarImagem() {
         facebook,
         instagram,
         linkedin,
-        imagemUri: imagemUri || '', // Se vazio, a tela de detalhes usará o BannerPadrao
-        //usuario_id: 1, // ID do usuário logado (exemplo)
-      });
+        imagemUri: imagemUri || '',
+      };
 
-      limparFormulario();
-
-      Alert.alert('Sucesso', 'Evento cadastrado com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => router.navigate('/' as any),
-        },
-      ]);
+      if (modoEdicao && id) {
+        await eventoDb.atualizarEvento(Number(id), payload);
+        limparFormulario();
+        Alert.alert('Sucesso', 'Evento atualizado com sucesso!', [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]);
+      } else {
+        await eventoDb.criarEvento(payload);
+        limparFormulario();
+        Alert.alert('Sucesso', 'Evento cadastrado com sucesso!', [
+          {
+            text: 'OK',
+            onPress: () => router.navigate('/' as any),
+          },
+        ]);
+      }
     } catch (error: any) {
       const mensagem = error?.message || 'Não foi possível salvar o evento.';
 
@@ -206,7 +257,7 @@ async function handleSelecionarImagem() {
         <Text style={styles.rotulo}>Nome do Evento</Text>
         <TextInput
           style={styles.input}
-          placeholder="Cadastrar novo evento"
+          placeholder={modoEdicao ? 'Editar título do evento' : 'Cadastrar novo evento'}
           placeholderTextColor={colors.gray[600]}
           value={nome}
           onChangeText={setNome}
@@ -374,7 +425,11 @@ async function handleSelecionarImagem() {
         />
 
         <View style={{ marginTop: 24 }}>
-          <Botao titulo="Salvar Evento" isLoading={carregando} onPress={handleSalvarEvento} />
+          <Botao
+            titulo={modoEdicao ? 'Atualizar Evento' : 'Salvar Evento'}
+            isLoading={carregando}
+            onPress={handleSalvarEvento}
+          />
         </View>
       </ScrollView>
     </View>

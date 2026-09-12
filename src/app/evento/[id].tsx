@@ -278,7 +278,12 @@ export default function TelaDetalhesEvento() {
             <TouchableOpacity
               style={[styles.botaoGestao, styles.botaoEditar]}
               activeOpacity={0.7}
-              onPress={() => console.log('Editar evento:', evento.id)}
+              onPress={() => {
+                router.push({
+                  pathname: '/adicionar-evento',
+                  params: { id: String(evento.id) },
+                });
+              }}
             >
               <Ionicons name="create-outline" size={16} color={colors.white} />
               <Text style={styles.textoBotaoGestao}>Editar Evento</Text>

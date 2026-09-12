@@ -1,7 +1,7 @@
 import { sessaoStorage } from './sessaoStorage';
 import { turso } from './tursoCliente';
 
-// ================= TIPOS DE EVENTOS =================
+// --- TIPOS DE EVENTOS ---
 export type EventoRegistro = {
   id: number;
   titulo: string;
@@ -23,7 +23,7 @@ export type EventoRegistro = {
 
 export type EventoCriacao = Omit<EventoRegistro, 'id'>;
 
-// ================= TIPOS DE USUÁRIOS =================
+// --- TIPOS DE USUÁRIOS ---
 export type UsuarioRegistro = {
   id: number;
   nome: string;
@@ -39,7 +39,7 @@ export type UsuarioRegistro = {
 
 export type UsuarioCriacao = Omit<UsuarioRegistro, 'id'>;
 
-// ================= UTILITÁRIOS DE DATA =================
+// --- UTILITÁRIOS DE DATA ---
 const MAPA_MESES: Record<string, number> = {
   jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5,
   jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11,
@@ -63,7 +63,7 @@ function converterDataString(dataStr: string): Date | null {
   }
 }
 
-// ================= HOOK DO BANCO =================
+// --- HOOK DO BANCO ---
 export function useEventoDatabase() {
   // --- GERENCIAMENTO DE SESSÃO LOCAL (ASYNCSTORAGE) ---
 
@@ -319,6 +319,55 @@ export function useEventoDatabase() {
     return true;
   }
 
+async function atualizarEvento(id: number, evento: Partial<EventoCriacao>) {
+  const usuarioId = await obterSessaoAtiva();
+  if (!usuarioId) {
+    throw new Error('Você precisa estar logado para editar este evento.');
+  }
+
+  const sql = `
+    UPDATE eventos SET
+      titulo = ?,
+      descricao = ?,
+      data = ?,
+      categorias = ?,
+      presencial = ?,
+      online = ?,
+      certificado = ?,
+      gratuito = ?,
+      preco = ?,
+      linkOficial = ?,
+      facebook = ?,
+      instagram = ?,
+      linkedin = ?,
+      imagemUri = ?
+    WHERE id = ? AND usuario_id = ?
+  `;
+
+  const args = [
+    evento.titulo ?? '',
+    evento.descricao ?? '',
+    evento.data ?? '',
+    evento.categorias ?? '[]',
+    evento.presencial ?? 0,
+    evento.online ?? 0,
+    evento.certificado ?? 0,
+    evento.gratuito ?? 0,
+    evento.preco ?? '',
+    evento.linkOficial ?? '',
+    evento.facebook ?? '',
+    evento.instagram ?? '',
+    evento.linkedin ?? '',
+    evento.imagemUri ?? '',
+    id,
+    usuarioId,
+  ];
+
+  await turso.execute(sql, args);
+
+  return true;
+}
+
   return {
     iniciarSessao,
     encerrarSessao,
@@ -334,6 +383,7 @@ export function useEventoDatabase() {
     autenticarUsuario,
     buscarUsuarioPorId,
     obterMetricasUsuario,
-    excluirEvento
+    excluirEvento,
+    atualizarEvento
   };
 }
